@@ -1,10 +1,11 @@
-const { app, BrowserWindow, ipcMain, clipboard, shell, safeStorage, dialog, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, clipboard, shell, safeStorage, dialog, Menu, screen } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const { spawn } = require("child_process");
 const http = require("http");
 const crypto = require("crypto");
+const { autoUpdater } = require("electron-updater");
 
 // Fester App-Name. WICHTIG für den Schlüsselbund: dessen Eintrag heißt
 // "<App-Name> Safe Storage". Ohne diese Zeile hieße die App im Entwicklungs-
@@ -72,6 +73,133 @@ function getJavaCommand() {
       "— nutze 'java' aus dem Suchpfad. Für die Auslieferung muss eine beiliegen.");
   }
   return "java";
+}
+
+// ─── Aktualisierung ─────────────────────────────────────────────────
+// Holt neue Versionen von den GitHub-Releases. Der Nutzer entscheidet, ob
+// heruntergeladen und wann neu gestartet wird — nichts passiert unbemerkt.
+let updateLaeuft = false;
+
+function meldeAnOberflaeche(kanal, daten) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send(kanal, daten);
+  }
+}
+
+function richteUpdaterEin() {
+  autoUpdater.autoDownload = false;          // erst fragen, dann laden
+  autoUpdater.autoInstallOnAppQuit = false;  // Neustart nur auf Ansage
+  autoUpdater.logger = { info: console.log, warn: console.warn, error: console.error, debug: () => {} };
+
+  autoUpdater.on("update-available", (info) => {
+    console.log("[Update] Neue Version verfügbar:", info.version);
+    meldeAnOberflaeche("update-status", { zustand: "verfuegbar", version: info.version });
+  });
+  autoUpdater.on("update-not-available", () => {
+    meldeAnOberflaeche("update-status", { zustand: "aktuell", version: app.getVersion() });
+  });
+  autoUpdater.on("download-progress", (p) => {
+    meldeAnOberflaeche("update-status", { zustand: "laedt", prozent: Math.round(p.percent) });
+  });
+  autoUpdater.on("update-downloaded", (info) => {
+    updateLaeuft = false;
+    meldeAnOberflaeche("update-status", { zustand: "bereit", version: info.version });
+  });
+  autoUpdater.on("error", (err) => {
+    updateLaeuft = false;
+    console.error("[Update] Fehler:", err?.message);
+    meldeAnOberflaeche("update-status", { zustand: "fehler", meldung: err?.message || "Unbekannter Fehler" });
+  });
+}
+
+// Im Entwicklungsmodus gibt es keine installierte App, die sich ersetzen liesse
+const updatesMoeglich = () => app.isPackaged;
+
+ipcMain.handle("update-pruefen", async () => {
+  if (!updatesMoeglich()) {
+    return { ok: false, grund: "Im Entwicklungsmodus nicht verfügbar." };
+  }
+  try {
+    const ergebnis = await autoUpdater.checkForUpdates();
+    return { ok: true, version: ergebnis?.updateInfo?.version, aktuell: app.getVersion() };
+  } catch (err) {
+    return { ok: false, grund: err?.message || "Suche fehlgeschlagen." };
+  }
+});
+
+ipcMain.handle("update-laden", async () => {
+  if (!updatesMoeglich()) return { ok: false, grund: "Im Entwicklungsmodus nicht verfügbar." };
+  if (updateLaeuft) return { ok: false, grund: "Läuft bereits." };
+  try {
+    updateLaeuft = true;
+    await autoUpdater.downloadUpdate();
+    return { ok: true };
+  } catch (err) {
+    updateLaeuft = false;
+    return { ok: false, grund: err?.message || "Herunterladen fehlgeschlagen." };
+  }
+});
+
+ipcMain.handle("update-installieren", () => {
+  if (!updatesMoeglich()) return { ok: false };
+  // Backend vorher sauber beenden, sonst bleibt der Java-Prozess hängen
+  stopBackend();
+  setImmediate(() => autoUpdater.quitAndInstall(false, true));
+  return { ok: true };
+});
+
+// ─── Fenstergröße und -position merken ──────────────────────────────
+// Damit die App beim nächsten Start so aussteht, wie man sie verlassen hat.
+const WINDOW_STATE_FILE = () => path.join(app.getPath("userData"), "window-state.json");
+
+function loadWindowState() {
+  const fallback = { width: 1280, height: 800 };
+  try {
+    const saved = JSON.parse(fs.readFileSync(WINDOW_STATE_FILE(), "utf8"));
+    if (!saved || typeof saved.width !== "number" || typeof saved.height !== "number") return fallback;
+
+    // Liegt das gemerkte Fenster noch auf einem vorhandenen Bildschirm?
+    // Nach einem Auflösungswechsel oder dem Abziehen eines zweiten Monitors
+    // wäre es sonst unsichtbar ausserhalb des sichtbaren Bereichs.
+    if (typeof saved.x === "number" && typeof saved.y === "number") {
+      const passt = screen.getAllDisplays().some(d => {
+        const a = d.workArea;
+        return saved.x < a.x + a.width && saved.x + saved.width > a.x
+            && saved.y < a.y + a.height && saved.y + saved.height > a.y;
+      });
+      if (!passt) {
+        console.log("[Fenster] Gemerkte Position liegt ausserhalb — zentriere neu.");
+        return { width: saved.width, height: saved.height };
+      }
+    }
+
+    // Nie grösser als der Bildschirm, auf dem es landet
+    const bereich = screen.getDisplayMatching(saved).workArea;
+    return {
+      x: saved.x, y: saved.y,
+      width: Math.min(saved.width, bereich.width),
+      height: Math.min(saved.height, bereich.height),
+      maximized: !!saved.maximized,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+let speicherTimer = null;
+function saveWindowState() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  clearTimeout(speicherTimer);
+  speicherTimer = setTimeout(() => {
+    try {
+      const maximized = mainWindow.isMaximized();
+      // Im maximierten Zustand die normale Grösse merken, nicht die volle
+      const b = maximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
+      fs.writeFileSync(WINDOW_STATE_FILE(), JSON.stringify({ ...b, maximized }));
+    } catch (err) {
+      console.warn("[Fenster] Konnte Grösse nicht merken:", err.message);
+    }
+  }, 400);
 }
 
 // ─── Schlüssel für die Account-Datei ────────────────────────────────
@@ -302,11 +430,14 @@ app.whenReady().then(async () => {
 
   startBackend();
 
+  const zustand = loadWindowState();
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 960,
-    minHeight: 600,
+    ...zustand,
+    // Kleinere Mindestmasse als vorher: bei hoher Windows-Skalierung
+    // (125 %/150 %) bleibt von der Auflösung weniger nutzbare Fläche übrig.
+    minWidth: 860,
+    minHeight: 560,
     backgroundColor: "#0a0a0f",
     show: false, // erst zeigen, wenn bereit
     // Kein nativer Fensterrahmen: die Oberfläche bringt eine eigene Titelleiste
@@ -323,6 +454,12 @@ app.whenReady().then(async () => {
     },
   });
 
+  if (zustand.maximized) mainWindow.maximize();
+
+  mainWindow.on("resize", saveWindowState);
+  mainWindow.on("move", saveWindowState);
+  mainWindow.on("close", saveWindowState);
+
   applyNavigationGuards(mainWindow);
 
   // Warten bis das Backend hochgefahren ist, dann Frontend laden
@@ -330,6 +467,13 @@ app.whenReady().then(async () => {
 
   await loadFrontend();
   mainWindow.once("ready-to-show", () => mainWindow.show());
+
+  // Leise nachsehen, ob es etwas Neues gibt. Meldet sich nur, wenn ja.
+  if (updatesMoeglich()) {
+    richteUpdaterEin();
+    autoUpdater.checkForUpdates().catch(err =>
+      console.log("[Update] Suche beim Start fehlgeschlagen:", err?.message));
+  }
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -346,6 +490,14 @@ app.on("before-quit", stopBackend);
 process.on("exit", stopBackend);
 
 // ─── IPC Handler ────────────────────────────────────────────────────
+// Oberflächengröße (Zoom). Nützlich bei ungewöhnlichen Auflösungen oder
+// hoher Windows-Skalierung, wo alles zu gross oder zu klein wirkt.
+ipcMain.handle("set-zoom", (event, faktor) => {
+  const f = Math.min(1.4, Math.max(0.7, Number(faktor) || 1));
+  mainWindow?.webContents.setZoomFactor(f);
+  return f;
+});
+
 // Einziger Weg der Oberfläche zum Backend
 ipcMain.handle("api-request", (event, payload) => callBackend(payload || {}));
 

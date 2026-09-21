@@ -236,6 +236,22 @@ Vor dem Veröffentlichen beachten: `CryptoManager.part()` enthält den alten
 VMENC1-Schlüssel im Klartext. Für ein privates Repo unkritisch (er steckt
 ohnehin in jeder ausgelieferten .jar, und die Daten liegen auf VMENC2/V3).
 
+## Neue Version veröffentlichen
+
+1. Version in `valorant-manager-electron/package.json` erhöhen (z. B. 2.0.1)
+2. `npm run package`
+3. Auf GitHub einen Release mit dem Tag `v<version>` anlegen
+4. **Beide Dateien aus `dist/` hochladen:**
+   - `Valorant-Manager-Setup.exe`
+   - `latest.yml` ← ohne die findet die App kein Update
+
+Der Dateiname der .exe muss gleich bleiben (`artifactName` in package.json),
+sonst bricht der Dauerlink `/releases/latest/download/...`.
+
+Das Repo muss öffentlich sein: electron-updater liest die Releases ohne
+Anmeldung. Bei einem privaten Repo müsste ein Zugangstoken in die App —
+das wäre schlechter als kein Update.
+
 ## Offene Punkte
 
 - **Maven fehlt im PATH** (kein `mvnw`). Behelf oben. Fix: `brew install maven`
@@ -258,6 +274,15 @@ ohnehin in jeder ausgelieferten .jar, und die Daten liegen auf VMENC2/V3).
 - `App.test.js` ist noch der CRA-Standardtest und schlägt fehl.
 - API-Keys werden beim Speichern gegen Henrik geprüft (`ValorantAPI.validateKey`).
   Bei Netzproblemen wird angenommen statt gesperrt, damit niemand ausgesperrt wird.
+- Fenstergrösse/-position werden in `userData/window-state.json` gemerkt.
+  Liegt die gemerkte Position auf keinem vorhandenen Bildschirm mehr (nach
+  Auflösungswechsel), zentriert `loadWindowState()` neu.
+- Oberflächengrösse (Zoom) liegt im localStorage unter `vm-zoom`.
+- Alle Dialoge: `width: min(Npx, calc(100vw - 32px))`, `maxHeight: 88vh`,
+  `overflowY: auto`. Bei neuen Dialogen genauso — sonst laufen sie bei
+  kleinen Fenstern oder hoher Windows-Skalierung aus dem Bild.
+- `saveBtnStyle`/`cancelBtnStyle` enthalten `flex: 1`. In einer **Spalte**
+  streckt das den Knopf senkrecht; dort `flex: "0 0 auto"` überschreiben.
 - Accounts werden per Listen-Index adressiert — nach dem Löschen zeigt ein
   offenes Modal auf den falschen Account.
 

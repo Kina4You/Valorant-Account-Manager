@@ -174,7 +174,7 @@ function AccountModal({ account, index, onClose, onSave }) {
       alignItems: "center", justifyContent: "center", zIndex: 1000
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: 480, background: "#0d0d14",
+        width: "min(480px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14",
         border: "1px solid rgba(255,70,85,0.35)",
         borderRadius: 12, padding: "28px 32px",
         boxShadow: "0 0 80px rgba(255,70,85,0.1)",
@@ -236,7 +236,7 @@ function DeleteModal({ name, onConfirm, onClose }) {
       alignItems: "center", justifyContent: "center", zIndex: 1000
     }} onClick={onClose}>
       <div onClick={e => e.stopPropagation()} style={{
-        width: 360, background: "#0d0d14",
+        width: "min(360px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14",
         border: "1px solid rgba(255,70,85,0.3)",
         borderRadius: 12, padding: "28px 32px",
         animation: "fadeUp 0.2s ease"
@@ -319,7 +319,7 @@ function CredentialsTab({ index, riotName, riotTag }) {
           }}>
             <span style={{
               fontSize: 9, color: "#4b5563", letterSpacing: 2,
-              fontFamily: "'Space Mono', monospace", width: 140, flexShrink: 0
+              fontFamily: "'Space Mono', monospace", width: 140, minWidth: 84, flexShrink: 1
             }}>{label}</span>
             <span style={{
               flex: 1, fontSize: 13, color: "#9ca3af",
@@ -639,7 +639,7 @@ function ApiKeyManager({ mode, onSaved, onClose }) {
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div style={{
-        width: 440, background: "#0d0d14",
+        width: "min(440px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14",
         border: "1px solid rgba(255,70,85,0.25)", borderRadius: 12,
         padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
@@ -758,7 +758,7 @@ function BackupManager({ onClose, onImported, showToast }) {
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div style={{
-        width: 440, background: "#0d0d14",
+        width: "min(440px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14",
         border: "1px solid rgba(255,70,85,0.25)", borderRadius: 12,
         padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
@@ -963,6 +963,181 @@ function SecuritySection({ status, onChanged, showToast }) {
   );
 }
 
+// ─── Oberflächengröße ────────────────────────────────
+// Bei ungewöhnlichen Auflösungen oder hoher Windows-Skalierung wirkt die
+// Oberfläche schnell zu gross oder zu klein. Der Wert bleibt gespeichert und
+// wird beim nächsten Start wieder gesetzt.
+const ZOOM_KEY = "vm-zoom";
+const ZOOM_STUFEN = [0.8, 0.9, 1.0, 1.1, 1.25];
+
+export function leseZoom() {
+  try {
+    const v = parseFloat(localStorage.getItem(ZOOM_KEY));
+    return Number.isFinite(v) && v >= 0.7 && v <= 1.4 ? v : 1;
+  } catch {
+    return 1; // privater Modus o. ä. — dann eben Standardgrösse
+  }
+}
+
+function ZoomSection({ showToast }) {
+  const [zoom, setZoom] = useState(leseZoom);
+
+  const setze = async (wert) => {
+    setZoom(wert);
+    try { localStorage.setItem(ZOOM_KEY, String(wert)); } catch { }
+    await window.electron?.setZoom(wert);
+    showToast(`Oberflächengröße: ${Math.round(wert * 100)} %`);
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
+          OBERFLÄCHENGRÖSSE
+        </span>
+        <InfoHint title="Oberflächengröße" width={300}>
+          Vergrössert oder verkleinert alles im Fenster — Schrift, Knöpfe,
+          Abstände.
+          <br /><br />
+          Nützlich bei ungewöhnlichen Bildschirmauflösungen oder wenn Windows
+          auf 125 % oder 150 % skaliert. Dann wirkt die Oberfläche sonst
+          schnell zu gross.
+          <br /><br />
+          Die Einstellung bleibt gespeichert und gilt ab dem nächsten Start
+          automatisch.
+        </InfoHint>
+      </div>
+
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+        padding: "10px 12px", borderRadius: 8,
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      }}>
+        {ZOOM_STUFEN.map(stufe => {
+          const aktiv = Math.abs(zoom - stufe) < 0.001;
+          return (
+            <button key={stufe} onClick={() => setze(stufe)} style={{
+              ...smallBtnStyle,
+              color: aktiv ? "#ff4655" : "#d1d5db",
+              borderColor: aktiv ? "rgba(255,70,85,0.5)" : "rgba(255,255,255,0.14)",
+              background: aktiv ? "rgba(255,70,85,0.12)" : "rgba(255,255,255,0.05)",
+            }}>
+              {Math.round(stufe * 100)} %
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Aktualisierung ──────────────────────────────────
+// Holt neue Fassungen direkt aus den GitHub-Releases. Der Nutzer entscheidet
+// in jedem Schritt: suchen, herunterladen, neu starten.
+function UpdateSection({ showToast }) {
+  const [zustand, setZustand] = useState("unbekannt"); // unbekannt|suche|aktuell|verfuegbar|laedt|bereit|fehler
+  const [version, setVersion] = useState(null);
+  const [prozent, setProzent] = useState(0);
+  const [meldung, setMeldung] = useState("");
+
+  // Auf Meldungen aus dem Hauptprozess hören
+  useEffect(() => {
+    const ab = window.electron?.onUpdateStatus?.((d) => {
+      if (d.zustand === "laedt") setProzent(d.prozent ?? 0);
+      if (d.version) setVersion(d.version);
+      if (d.zustand === "fehler") setMeldung(d.meldung || "");
+      setZustand(d.zustand);
+    });
+    return ab; // beim Schliessen wieder abmelden
+  }, []);
+
+  const suchen = async () => {
+    setZustand("suche"); setMeldung("");
+    const r = await window.electron?.updatePruefen();
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || "Suche fehlgeschlagen."); return; }
+    // Der genaue Zustand kommt gleich als Meldung vom Hauptprozess
+  };
+
+  const laden = async () => {
+    setZustand("laedt"); setProzent(0);
+    const r = await window.electron?.updateLaden();
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || "Herunterladen fehlgeschlagen."); }
+  };
+
+  const installieren = async () => {
+    showToast("App startet neu...");
+    await window.electron?.updateInstallieren();
+  };
+
+  const text = {
+    unbekannt: "Noch nicht nachgesehen.",
+    suche: "Suche läuft...",
+    aktuell: "Du hast die neueste Fassung.",
+    verfuegbar: `Version ${version} ist verfügbar.`,
+    laedt: `Wird heruntergeladen... ${prozent} %`,
+    bereit: `Version ${version} ist fertig geladen.`,
+    fehler: meldung || "Es hat nicht geklappt.",
+  }[zustand];
+
+  const farbe = zustand === "fehler" ? "#ff4655"
+    : (zustand === "verfuegbar" || zustand === "bereit") ? "#22c55e" : "#9ca3af";
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
+          AKTUALISIERUNG
+        </span>
+        <InfoHint title="Aktualisierung" width={320}>
+          Sucht auf GitHub nach einer neueren Fassung und lädt sie herunter.
+          Du musst nichts neu installieren — beim Neustart ersetzt sich die App
+          selbst.
+          <br /><br />
+          Es passiert nichts ungefragt: Suchen, Herunterladen und Neustarten
+          bestätigst du jeweils selbst. Deine Accounts bleiben dabei unberührt,
+          sie liegen ausserhalb des Programmordners.
+          <br /><br />
+          <span style={{ color: "#f59e0b" }}>Im Entwicklungsmodus nicht
+          verfügbar</span> — dort gibt es keine installierte App, die sich
+          ersetzen liesse.
+        </InfoHint>
+      </div>
+
+      <div style={{
+        padding: "10px 12px", borderRadius: 8,
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <div style={{ fontSize: 11, color: farbe, lineHeight: 1.5 }}>{text}</div>
+          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+            {(zustand === "verfuegbar") && (
+              <button onClick={laden} style={{ ...smallBtnStyle, color: "#22c55e", borderColor: "rgba(34,197,94,0.4)" }}>
+                HERUNTERLADEN
+              </button>
+            )}
+            {(zustand === "bereit") && (
+              <button onClick={installieren} style={{ ...smallBtnStyle, color: "#22c55e", borderColor: "rgba(34,197,94,0.4)" }}>
+                NEU STARTEN
+              </button>
+            )}
+            {zustand !== "laedt" && zustand !== "bereit" && (
+              <button onClick={suchen} disabled={zustand === "suche"} style={smallBtnStyle}>
+                {zustand === "suche" ? "SUCHT..." : "SUCHEN"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {zustand === "laedt" && (
+          <div style={{ marginTop: 8, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+            <div style={{ width: `${prozent}%`, height: "100%", background: "#22c55e", transition: "width 0.2s ease" }} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Grundeinstellungen ──────────────────────────────
 // Erscheint einmalig nach der Ersteinrichtung und ist später jederzeit über
 // das Zahnrad erreichbar. Jede Einstellung hat einen Erklärungs-Pfeil.
@@ -974,7 +1149,7 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div style={{
-        width: 520, maxHeight: "86vh", overflowY: "auto",
+        width: "min(520px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto",
         background: "#0d0d14", border: "1px solid rgba(255,70,85,0.25)",
         borderRadius: 12, padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
@@ -990,9 +1165,21 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
             : "Die Pfeile ➜ erklären jede Einstellung. Überfahren zeigt die Erklärung, Anklicken hält sie fest."}
         </div>
 
+        {/* Aktualisierung */}
+        {!setupMode && (
+          <div style={{ marginBottom: 22 }}>
+            <UpdateSection showToast={showToast} />
+          </div>
+        )}
+
         {/* Schutz der Accounts */}
         <div style={{ marginBottom: 22 }}>
           <SecuritySection status={status} onChanged={onChanged} showToast={showToast} />
+        </div>
+
+        {/* Oberflächengröße */}
+        <div style={{ marginBottom: 22 }}>
+          <ZoomSection showToast={showToast} />
         </div>
 
         {/* Sicherung */}
@@ -1092,7 +1279,7 @@ function UnlockScreen({ onUnlocked }) {
       display: "flex", alignItems: "center", justifyContent: "center",
     }}>
       <div style={{
-        width: 400, background: "#0d0d14", border: "1px solid rgba(255,70,85,0.25)",
+        width: "min(400px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14", border: "1px solid rgba(255,70,85,0.25)",
         borderRadius: 12, padding: "30px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
         <div style={{ fontSize: 9, letterSpacing: 3, color: "#ff4655", fontFamily: "'Space Mono', monospace", marginBottom: 8 }}>
@@ -1173,6 +1360,12 @@ export default function App() {
       setSecurity({ mode: "geraet", locked: false, broken: false });
       return null;
     }
+  }, []);
+
+  // Gespeicherte Oberflächengröße gleich beim Start anwenden
+  useEffect(() => {
+    const z = leseZoom();
+    if (z !== 1) window.electron?.setZoom(z);
   }, []);
 
   useEffect(() => {
@@ -1467,7 +1660,7 @@ export default function App() {
 
         {/* ── SIDEBAR ── */}
         <aside style={{
-          width: 248, borderRight: "1px solid rgba(255,255,255,0.06)",
+          width: "clamp(180px, 22vw, 248px)", borderRight: "1px solid rgba(255,255,255,0.06)",
           display: "flex", flexDirection: "column",
           background: "rgba(8,8,13,0.8)", flexShrink: 0,
         }}>

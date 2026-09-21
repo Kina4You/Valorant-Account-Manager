@@ -14,6 +14,22 @@ contextBridge.exposeInMainWorld("electron", {
   // Passwort in Zwischenablage
   copyToClipboard: (text) => ipcRenderer.invoke("copy-to-clipboard", text),
 
+  // Aktualisierung
+  updatePruefen: () => ipcRenderer.invoke("update-pruefen"),
+  updateLaden: () => ipcRenderer.invoke("update-laden"),
+  updateInstallieren: () => ipcRenderer.invoke("update-installieren"),
+  // Fortschrittsmeldungen des Updaters. Gibt eine Funktion zum Abmelden zurück,
+  // damit React beim Aufräumen keine Zuhörer stehen lässt.
+  onUpdateStatus: (rueckruf) => {
+    const handler = (_e, daten) => rueckruf(daten);
+    ipcRenderer.on("update-status", handler);
+    return () => ipcRenderer.removeListener("update-status", handler);
+  },
+  version: process.env.npm_package_version || null,
+
+  // Oberflächengröße einstellen (0.7 bis 1.4)
+  setZoom: (faktor) => ipcRenderer.invoke("set-zoom", faktor),
+
   // Externen Link im Standardbrowser öffnen
   openExternal: (url) => ipcRenderer.invoke("open-external", url),
 
