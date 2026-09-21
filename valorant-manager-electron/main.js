@@ -7,6 +7,34 @@ const http = require("http");
 const crypto = require("crypto");
 const { autoUpdater } = require("electron-updater");
 
+// ─── Sprache des Hauptprozesses ─────────────────────────────────────
+// Die Oberfläche hat ihr eigenes Wörterbuch (frontend/src/i18n.js). Hier
+// brauchen wir nur die paar Texte, die aus diesem Prozess kommen: die
+// Titel der Systemdialoge und zwei Fehlermeldungen. Die Oberfläche meldet
+// ihre Sprache nach dem Start; bis dahin gilt Englisch.
+let uiSprache = "en";
+const MAIN_TEXTE = {
+  en: {
+    javaTitle: "Java not found",
+    javaBody: "Valorant Manager needs Java 21 or newer.\n\n"
+      + "Either install Java, or ship a runtime in the \"runtime\" folder.\n\n"
+      + "The app will start but will not show any accounts.",
+    saveTitle: "Back up accounts",
+    openTitle: "Restore from backup",
+    exportKind: "Valorant Manager backup",
+  },
+  de: {
+    javaTitle: "Java nicht gefunden",
+    javaBody: "Der Valorant Manager braucht Java 21 oder neuer.\n\n"
+      + "Entweder Java installieren oder eine Laufzeit im Ordner \"runtime\" "
+      + "mitliefern.\n\nDie App startet, zeigt aber keine Accounts an.",
+    saveTitle: "Accounts sichern",
+    openTitle: "Sicherung einlesen",
+    exportKind: "Valorant Manager Sicherung",
+  },
+};
+const mt = (schluessel) => (MAIN_TEXTE[uiSprache] ?? MAIN_TEXTE.en)[schluessel];
+
 // Fester App-Name. WICHTIG für den Schlüsselbund: dessen Eintrag heißt
 // "<App-Name> Safe Storage". Ohne diese Zeile hieße die App im Entwicklungs-
 // modus "Electron" und gepackt "Valorant Manager" — die fertige App käme dann
@@ -117,7 +145,7 @@ const updatesMoeglich = () => app.isPackaged;
 
 ipcMain.handle("update-pruefen", async () => {
   if (!updatesMoeglich()) {
-    return { ok: false, grund: "Im Entwicklungsmodus nicht verfügbar." };
+    return { ok: false, code: "upd.devMode" };
   }
   try {
     const ergebnis = await autoUpdater.checkForUpdates();
@@ -128,8 +156,8 @@ ipcMain.handle("update-pruefen", async () => {
 });
 
 ipcMain.handle("update-laden", async () => {
-  if (!updatesMoeglich()) return { ok: false, grund: "Im Entwicklungsmodus nicht verfügbar." };
-  if (updateLaeuft) return { ok: false, grund: "Läuft bereits." };
+  if (!updatesMoeglich()) return { ok: false, code: "upd.devMode" };
+  if (updateLaeuft) return { ok: false, code: "upd.running" };
   try {
     updateLaeuft = true;
     await autoUpdater.downloadUpdate();
@@ -270,12 +298,7 @@ function startBackend() {
     // Häufigster Fall auf einem frischen Windows-Rechner: Java fehlt.
     // Ohne diese Meldung sähe der Nutzer nur ein Fenster ohne Daten.
     if (err.code === "ENOENT") {
-      dialog.showErrorBox(
-        "Java nicht gefunden",
-        "Der Valorant Manager braucht Java 21 oder neuer.\n\n"
-        + "Entweder Java installieren oder eine Laufzeit im Ordner \"runtime\" "
-        + "mitliefern.\n\nDie App startet, zeigt aber keine Accounts an."
-      );
+      dialog.showErrorBox(mt("javaTitle"), mt("javaBody"));
     }
   });
 
@@ -315,13 +338,13 @@ function waitForBackend(retries = 60) {
 function callBackend({ method, path: apiPath, body }) {
   return new Promise((resolve) => {
     if (!backendPort) {
-      resolve({ status: 0, error: "Backend läuft noch nicht." });
+      resolve({ status: 0, code: "err.backendNotReady" });
       return;
     }
     // Nur Pfade in die eigene API zulassen — keine fremden Ziele, keine Umwege
     if (typeof apiPath !== "string" || !/^\/api\/[A-Za-z0-9/_\-.]*$/.test(apiPath)) {
       console.warn("[Sicherheit] Unzulässiger API-Pfad abgelehnt:", apiPath);
-      resolve({ status: 0, error: "Unzulässiger Pfad." });
+      resolve({ status: 0, code: "err.badPath" });
       return;
     }
 
@@ -342,7 +365,7 @@ function callBackend({ method, path: apiPath, body }) {
         try {
           resolve({ status: res.statusCode, data: JSON.parse(data) });
         } catch {
-          resolve({ status: res.statusCode, error: "Unlesbare Antwort vom Backend." });
+          resolve({ status: res.statusCode, code: "err.badResponse" });
         }
       });
     });
@@ -490,6 +513,12 @@ app.on("before-quit", stopBackend);
 process.on("exit", stopBackend);
 
 // ─── IPC Handler ────────────────────────────────────────────────────
+// Sprache der Oberfläche übernehmen — betrifft nur die Systemdialoge
+ipcMain.handle("set-lang", (event, code) => {
+  uiSprache = code === "de" ? "de" : "en";
+  return uiSprache;
+});
+
 // Oberflächengröße (Zoom). Nützlich bei ungewöhnlichen Auflösungen oder
 // hoher Windows-Skalierung, wo alles zu gross oder zu klein wirkt.
 ipcMain.handle("set-zoom", (event, faktor) => {
@@ -511,7 +540,7 @@ ipcMain.handle("open-external", (event, url) => openExternally(String(url)));
 
 ipcMain.handle("launch-riot-client", async () => {
   if (process.platform !== "win32") {
-    return { ok: false, message: "Der Riot Client lässt sich nur unter Windows starten." };
+    return { ok: false, code: "err.riotWindows" };
   }
   // Riot lässt sich bei der Installation umlenken — deshalb mehrere Orte prüfen,
   // statt einen festen Pfad anzunehmen.
@@ -523,7 +552,7 @@ ipcMain.handle("launch-riot-client", async () => {
   ];
   const found = candidates.find((p) => p && fs.existsSync(p));
   if (!found) {
-    return { ok: false, message: "Riot Client nicht gefunden. Bitte einmal von Hand starten." };
+    return { ok: false, code: "err.riotNotFound" };
   }
   // Direkt Valorant starten statt nur den Launcher zu öffnen
   const child = spawn(found, ["--launch-product=valorant", "--launch-patchline=live"], {
@@ -536,14 +565,14 @@ ipcMain.handle("launch-riot-client", async () => {
 // ─── Export / Import: Datei-Dialoge ─────────────────────────────────
 // Den Pfad wählt immer der Nutzer über den Systemdialog. Die Oberfläche kann
 // keinen Pfad vorgeben — sie liefert nur den Inhalt bzw. bekommt ihn zurück.
-const EXPORT_FILTER = [{ name: "Valorant Manager Export", extensions: ["vmexport"] }];
+const exportFilter = () => [{ name: mt("exportKind"), extensions: ["vmexport"] }];
 
 ipcMain.handle("export-save", async (event, content) => {
   const stamp = new Date().toISOString().slice(0, 10);
   const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-    title: "Accounts sichern",
+    title: mt("saveTitle"),
     defaultPath: `valorant-manager-${stamp}.vmexport`,
-    filters: EXPORT_FILTER,
+    filters: exportFilter(),
   });
   if (canceled || !filePath) return { ok: false, canceled: true };
   try {
@@ -556,9 +585,9 @@ ipcMain.handle("export-save", async (event, content) => {
 
 ipcMain.handle("import-open", async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
-    title: "Sicherung einlesen",
+    title: mt("openTitle"),
     properties: ["openFile"],
-    filters: EXPORT_FILTER,
+    filters: exportFilter(),
   });
   if (canceled || !filePaths?.length) return { ok: false, canceled: true };
   try {

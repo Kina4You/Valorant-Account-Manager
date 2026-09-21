@@ -231,6 +231,10 @@ const en = {
   "upd.restart": "RESTART",
   "upd.restarting": "Restarting...",
   "upd.devMode": "Not available in development mode.",
+  "upd.running": "Already running.",
+  "err.backendNotReady": "The backend is not ready yet.",
+  "err.badPath": "Invalid request path.",
+  "err.badResponse": "Unreadable response from the backend.",
   "upd.searchFailed": "Search failed.",
   "upd.downloadFailed": "Download failed.",
 
@@ -494,6 +498,10 @@ const de = {
   "upd.restart": "NEU STARTEN",
   "upd.restarting": "App startet neu...",
   "upd.devMode": "Im Entwicklungsmodus nicht verfügbar.",
+  "upd.running": "Läuft bereits.",
+  "err.backendNotReady": "Das Backend ist noch nicht bereit.",
+  "err.badPath": "Unzulässiger Anfragepfad.",
+  "err.badResponse": "Unlesbare Antwort vom Backend.",
   "upd.searchFailed": "Suche fehlgeschlagen.",
   "upd.downloadFailed": "Herunterladen fehlgeschlagen.",
 

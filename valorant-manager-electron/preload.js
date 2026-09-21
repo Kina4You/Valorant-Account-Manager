@@ -27,6 +27,9 @@ contextBridge.exposeInMainWorld("electron", {
   },
   version: process.env.npm_package_version || null,
 
+  // Sprache melden — der Hauptprozess braucht sie für die Systemdialoge
+  setUiLang: (code) => ipcRenderer.invoke("set-lang", code),
+
   // Oberflächengröße einstellen (0.7 bis 1.4)
   setZoom: (faktor) => ipcRenderer.invoke("set-zoom", faktor),
 

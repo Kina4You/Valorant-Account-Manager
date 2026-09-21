@@ -1085,14 +1085,14 @@ function UpdateSection({ showToast }) {
   const suchen = async () => {
     setZustand("suche"); setMeldung("");
     const r = await window.electron?.updatePruefen();
-    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || t("upd.searchFailed")); return; }
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.code ? t(r.code) : (r?.grund || t("upd.searchFailed"))); return; }
     // Der genaue Zustand kommt gleich als Meldung vom Hauptprozess
   };
 
   const laden = async () => {
     setZustand("laedt"); setProzent(0);
     const r = await window.electron?.updateLaden();
-    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || t("upd.downloadFailed")); }
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.code ? t(r.code) : (r?.grund || t("upd.downloadFailed"))); }
   };
 
   const installieren = async () => {
@@ -1388,6 +1388,9 @@ export default function App() {
   useEffect(() => {
     const z = leseZoom();
     if (z !== 1) window.electron?.setZoom(z);
+    // Der Hauptprozess braucht die Sprache für die Systemdialoge
+    // (Datei-Auswahl, Java-Fehlermeldung).
+    window.electron?.setUiLang(getLang());
   }, []);
 
   useEffect(() => {
@@ -1480,7 +1483,7 @@ export default function App() {
     if (window.electron) {
       const res = await window.electron.launchRiotClient();
       // Sagt jetzt, warum es nicht geklappt hat, statt stumm nichts zu tun
-      if (res && !res.ok) showToast(res.message || t("err.generic"), "error");
+      if (res && !res.ok) showToast(res.code ? t(res.code) : t("err.generic"), "error");
     } else {
       showToast(t("toast.desktopOnly"), "info");
     }

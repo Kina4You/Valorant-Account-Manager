@@ -23,7 +23,7 @@ async function req(path, options = {}) {
   const res = await window.electron.apiRequest(options.method || "GET", `${BASE}${path}`, body);
 
   if (!res || res.status === 0) {
-    throw new Error(res?.error || t("err.backendDown"));
+    throw new Error(res?.code ? t(res.code) : (res?.error || t("err.backendDown")));
   }
   if (res.status === 401 || res.status === 403) {
     throw new Error(t("err.denied"));
