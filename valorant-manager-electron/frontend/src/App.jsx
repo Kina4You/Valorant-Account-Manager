@@ -477,7 +477,13 @@ function OverviewTab({ account, data, onSync, syncing }) {
       <div style={{ color: "#4b5563", fontSize: 13, fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>
         KEINE DATEN GELADEN
       </div>
-      <button onClick={onSync} disabled={syncing} style={saveBtnStyle}>
+      {/* flex:"0 0 auto" wie beim Knopf im leeren Zustand: in dieser Spalte
+          wuerde das flex:1 aus saveBtnStyle den Knopf senkrecht strecken. */}
+      <button
+        onClick={onSync}
+        disabled={syncing}
+        style={{ ...saveBtnStyle, flex: "0 0 auto", padding: "11px 22px" }}
+      >
         {syncing ? "SYNCHRONISIERT..." : "JETZT SYNCHRONISIEREN"}
       </button>
     </div>
@@ -1718,7 +1724,14 @@ export default function App() {
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2 }}>
                 ACCOUNT AUSWÄHLEN
               </div>
-              <button onClick={() => setModal("add")} style={saveBtnStyle}>
+              {/* flex:"0 0 auto" hebt das flex:1 aus saveBtnStyle auf. In den
+                  Dialogen steht der Knopf in einer Zeile (dort teilt flex:1 die
+                  Breite auf) — hier in einer Spalte, wo es ihn ueber die ganze
+                  Fensterhoehe strecken wuerde. */}
+              <button
+                onClick={() => setModal("add")}
+                style={{ ...saveBtnStyle, flex: "0 0 auto", padding: "11px 22px" }}
+              >
                 + ERSTEN ACCOUNT ANLEGEN
               </button>
             </div>
@@ -1805,12 +1818,14 @@ const cancelBtnStyle = {
   flex: 1, padding: "10px",
   background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
   borderRadius: 6, color: "#6b7280", fontSize: 12, letterSpacing: 2, fontWeight: 700,
+  cursor: "pointer",
 };
 
 const saveBtnStyle = {
   flex: 1, padding: "10px",
   background: "rgba(255,70,85,0.15)", border: "1px solid rgba(255,70,85,0.4)",
   borderRadius: 6, color: "#ff4655", fontSize: 12, letterSpacing: 2, fontWeight: 700,
+  cursor: "pointer",
 };
 
 const iconBtnStyle = {

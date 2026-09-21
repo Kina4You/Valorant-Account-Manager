@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, clipboard, shell, safeStorage, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, clipboard, shell, safeStorage, dialog, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
@@ -295,6 +295,11 @@ async function loadFrontend() {
 }
 
 app.whenReady().then(async () => {
+  // Standardmenü (File/Edit/View/Window/Help) entfernen — die App hat eine
+  // eigene Bedienung. Unter macOS bleibt es, dort gehört es zum System und
+  // enthält u. a. "Beenden".
+  if (process.platform !== "darwin") Menu.setApplicationMenu(null);
+
   startBackend();
 
   mainWindow = new BrowserWindow({
@@ -304,6 +309,11 @@ app.whenReady().then(async () => {
     minHeight: 600,
     backgroundColor: "#0a0a0f",
     show: false, // erst zeigen, wenn bereit
+    // Kein nativer Fensterrahmen: die Oberfläche bringt eine eigene Titelleiste
+    // mit (Ziehbereich per WebkitAppRegion und eigene Fensterknöpfe). Ohne
+    // frame:false lägen beide übereinander — nativer Rahmen samt Menüleiste
+    // oben, die eigene Leiste direkt darunter.
+    frame: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
