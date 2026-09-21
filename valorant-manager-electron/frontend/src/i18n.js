@@ -35,6 +35,18 @@ const AKTUELL = getLang();
 
 const en = {
   // ── Allgemein ──
+  "common.closeHint": "Close ✕",
+  "common.locale": "en-GB",
+  "creds.warning": "Credentials are stored locally only. Never share them!",
+  "ov.accountLevel": "Account level",
+  "ov.current": "current",
+  "ov.matchesCount": "{n} matches",
+  "ov.noKdaData": "no match data",
+  "ov.lastMatches": "LAST MATCHES",
+  "nav.noResults": "NO RESULTS",
+  "nav.noAccounts": "NO ACCOUNTS",
+  "nav.addAccountLong": "+ ADD ACCOUNT",
+  "nav.syncAllShort": "↻ SYNC ALL",
   "common.cancel": "CANCEL",
   "common.save": "SAVE",
   "common.close": "CLOSE",
@@ -92,7 +104,7 @@ const en = {
   "creds.copied": "Copied",
   "creds.show": "Show",
   "creds.hide": "Hide",
-  "creds.copy": "Copy",
+  "creds.copy": "COPY",
   "creds.empty": "Not set",
 
   // ── Übersicht ──
@@ -299,6 +311,18 @@ const en = {
 };
 
 const de = {
+  "common.closeHint": "Schliessen ✕",
+  "common.locale": "de-DE",
+  "creds.warning": "Zugangsdaten sind nur lokal gespeichert. Nie teilen!",
+  "ov.accountLevel": "Account Level",
+  "ov.current": "aktuell",
+  "ov.matchesCount": "{n} Matches",
+  "ov.noKdaData": "keine Match-Daten",
+  "ov.lastMatches": "LETZTE MATCHES",
+  "nav.noResults": "KEINE TREFFER",
+  "nav.noAccounts": "KEIN ACCOUNT",
+  "nav.addAccountLong": "+ ACCOUNT HINZUFÜGEN",
+  "nav.syncAllShort": "↻ ALLE SYNCEN",
   "common.cancel": "ABBRECHEN",
   "common.save": "SPEICHERN",
   "common.close": "SCHLIESSEN",
@@ -353,7 +377,7 @@ const de = {
   "creds.copied": "Kopiert",
   "creds.show": "Anzeigen",
   "creds.hide": "Verbergen",
-  "creds.copy": "Kopieren",
+  "creds.copy": "KOPIEREN",
   "creds.empty": "Nicht gesetzt",
 
   "ov.rank": "RANK",

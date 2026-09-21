@@ -80,7 +80,7 @@ function InfoHint({ title, children, width = 280 }) {
               onClick={() => { setPinned(false); setHover(false); }}
               style={{ display: "block", marginTop: 8, fontSize: 10, color: "#6b7280", cursor: "pointer" }}
             >
-              Schliessen ✕
+              {t("common.closeHint")}
             </span>
           )}
         </span>
@@ -305,7 +305,7 @@ function CredentialsTab({ index, riotName, riotTag }) {
       }}>
         <span style={{ fontSize: 14 }}>⚠</span>
         <span style={{ fontSize: 12, color: "#f59e0b", fontWeight: 500 }}>
-          Zugangsdaten sind nur lokal gespeichert. Nie teilen!
+          {t("creds.warning")}
         </span>
       </div>
 
@@ -341,7 +341,7 @@ function CredentialsTab({ index, riotName, riotTag }) {
               background: copied === key ? "rgba(34,197,94,0.1)" : undefined,
               color: copied === key ? "#22c55e" : undefined
             }}>
-              {copied === key ? "✓" : "COPY"}
+              {copied === key ? "✓" : t("creds.copy")}
             </button>
           </div>
         ))}
@@ -380,7 +380,7 @@ function RankGraph({ matchHistory }) {
       cumulative,
       rrChange: m.rrChange || 0,
       result: m.result,
-      date: new Date(m.timestamp).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }),
+      date: new Date(m.timestamp).toLocaleDateString(t("common.locale"), { day: "2-digit", month: "2-digit" }),
       timestamp: m.timestamp,
     };
   });
@@ -397,7 +397,7 @@ function RankGraph({ matchHistory }) {
       {/* Header mit Filtern */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
         <div style={{ fontSize: 10, letterSpacing: 2, color: "#4b5563", fontFamily: "'Space Mono', monospace" }}>
-          RR-VERLAUF
+          {t("graph.title")}
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           {Object.entries(ranges).map(([key, r]) => (
@@ -509,16 +509,16 @@ function OverviewTab({ account, data, onSync, syncing }) {
 
   const stats = [
     { label: t("ov.rank"), value: tb(data.rankName, "Unranked"), sub: `${data.rr || 0} RR`, color: rankColor(data.rankName) },
-    { label: t("ov.level"), value: data.level || 0, sub: "Account Level", color: "#60a5fa" },
+    { label: t("ov.level"), value: data.level || 0, sub: t("ov.accountLevel"), color: "#60a5fa" },
     { label: t("ov.streak"),
       value: streakCount > 0 ? `${streakCount}W` : streakCount < 0 ? `${Math.abs(streakCount)}L` : "—",
-      sub: "aktuell", color: streakCount > 0 ? "#22c55e" : streakCount < 0 ? "#ef4444" : "#6b7280" },
-    { label: t("ov.winrate"), value: `${winRate}%`, sub: `${data.lastGames?.length || 0} Matches`, color: winRate >= 50 ? "#22c55e" : "#f59e0b" },
+      sub: t("ov.current"), color: streakCount > 0 ? "#22c55e" : streakCount < 0 ? "#ef4444" : "#6b7280" },
+    { label: t("ov.winrate"), value: `${winRate}%`, sub: t("ov.matchesCount", { n: data.lastGames?.length || 0 }), color: winRate >= 50 ? "#22c55e" : "#f59e0b" },
     { label: t("ov.kda"),
       value: hasKda ? kdaRatio.toFixed(2) : "—",
       sub: hasKda
         ? `${data.avgKills.toFixed(1)} / ${data.avgDeaths.toFixed(1)} / ${data.avgAssists.toFixed(1)}`
-        : "keine Match-Daten",
+        : t("ov.noKdaData"),
       color: kdaRatio >= 1.3 ? "#22c55e" : kdaRatio >= 1.0 ? "#f59e0b" : "#ef4444" },
   ];
 
@@ -546,7 +546,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
         {/* Last Games */}
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "16px 18px" }}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: "#4b5563", fontFamily: "'Space Mono', monospace", marginBottom: 12 }}>
-            LETZTE MATCHES
+            {t("ov.lastMatches")}
           </div>
           {data.lastGames?.length ? (
             <div style={{ display: "flex", gap: 5 }}>
@@ -570,7 +570,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
         {/* Top Agents */}
         <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: "16px 18px" }}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: "#4b5563", fontFamily: "'Space Mono', monospace", marginBottom: 12 }}>
-            TOP AGENTS
+            {t("ov.topAgents")}
           </div>
           {data.topAgents?.length ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -1268,7 +1268,7 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
             </button>
           ) : (
             <button onClick={onClose} style={{ ...cancelBtnStyle, width: "100%" }}>
-              SCHLIESSEN
+              {t("common.close")}
             </button>
           )}
         </div>
@@ -1432,7 +1432,7 @@ export default function App() {
         showToast(tb(res.message, t("toast.syncFailed")), "error");
       }
     } catch {
-      showToast("Sync fehlgeschlagen", "error");
+      showToast(t("toast.syncFailed"), "error");
     } finally {
       setSyncing(s => ({ ...s, [index]: false }));
     }
@@ -1507,7 +1507,7 @@ export default function App() {
         alignItems: "center", justifyContent: "center",
         fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2,
       }}>
-        LÄDT...
+        {t("common.loading")}
       </div>
     );
   }
@@ -1646,7 +1646,7 @@ export default function App() {
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Suchen..."
+            placeholder={t("common.search")}
             style={{
               ...inputStyle, width: 180, padding: "6px 12px",
               fontSize: 12, background: "rgba(255,255,255,0.04)"
@@ -1657,7 +1657,7 @@ export default function App() {
             background: "rgba(255,70,85,0.1)", border: "1px solid rgba(255,70,85,0.3)",
             borderRadius: 4, color: "#ff4655", fontSize: 11, fontWeight: 700, letterSpacing: 1.5,
           }}>
-            ↻ ALLE SYNC
+            {t("nav.syncAllShort")}
           </button>
           <button onClick={() => setShowBackup(true)} title={t("nav.backup")} style={{
             padding: "6px 12px",
@@ -1764,7 +1764,7 @@ export default function App() {
 
             {filtered.length === 0 && (
               <div style={{ padding: "20px 12px", color: "#374151", fontSize: 12, fontFamily: "'Space Mono', monospace", textAlign: "center" }}>
-                {search ? "KEINE TREFFER" : "KEIN ACCOUNT"}
+                {search ? t("nav.noResults") : t("nav.noAccounts")}
               </div>
             )}
           </div>
@@ -1790,7 +1790,7 @@ export default function App() {
                 e.currentTarget.style.background = "transparent";
               }}
             >
-              + ACCOUNT HINZUFÜGEN
+              {t("nav.addAccountLong")}
             </button>
           </div>
         </aside>
@@ -1875,12 +1875,12 @@ export default function App() {
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
                     {[
                       { label: t("account.login"), color: "#ff4655", bg: "rgba(255,70,85,0.15)", border: "rgba(255,70,85,0.4)", action: handleLogin },
-                      { label: syncing[selected.index] ? "SYNC..." : "SYNC", color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(selected.index) },
+                      { label: syncing[selected.index] ? t("nav.syncing") : t("nav.sync"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(selected.index) },
                       { label: t("nav.edit"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => setModal("edit") },
                       !selected.isMain && { label: t("nav.setMain"), color: "#ffd700", bg: "rgba(255,215,0,0.07)", border: "rgba(255,215,0,0.25)", action: () => handleSetMain(selected.index) },
                       { label: "✕", color: "#ef4444", bg: "rgba(239,68,68,0.07)", border: "rgba(239,68,68,0.25)", action: () => setModal("delete") },
                     ].filter(Boolean).map(btn => (
-                      <button key={btn.label} onClick={btn.action} disabled={syncing[selected.index] && btn.label.includes("SYNC")} style={{
+                      <button key={btn.label} onClick={btn.action} disabled={syncing[selected.index] && btn.label === t("nav.syncing")} style={{
                         padding: "7px 14px", background: btn.bg,
                         border: `1px solid ${btn.border}`, borderRadius: 4,
                         color: btn.color, fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
