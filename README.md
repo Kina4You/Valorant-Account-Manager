@@ -9,6 +9,21 @@ Zielplattform ist Windows; entwickelt wird auf macOS.
 
 ---
 
+## Download
+
+**[➜ Aktuellen Installer herunterladen](https://github.com/Kina4You/Valorant-Account-Manager/releases/latest/download/Valorant-Manager-Setup.exe)**
+
+Windows 10/11, 64 Bit. Rund 141 MB — Java ist mit dabei, es muss nichts
+weiter installiert werden.
+
+> **Beim ersten Start warnt Windows.** Der Installer ist nicht signiert
+> (ein Zertifikat kostet mehrere hundert Euro im Jahr). Auf
+> „Weitere Informationen" klicken, dann „Trotzdem ausführen". Nur einmal nötig.
+
+Alle Versionen und Änderungsnotizen: [Releases](https://github.com/Kina4You/Valorant-Account-Manager/releases)
+
+---
+
 ## Aufbau
 
 Drei Teile, die zur Laufzeit zusammenspielen:
