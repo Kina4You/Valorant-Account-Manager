@@ -594,6 +594,21 @@ export function t(key, vars) {
   return text;
 }
 
+/**
+ * Rangnamen. Anders als tb(): ein unbekannter Wert ist hier der NORMALFALL —
+ * "Diamond 3", "Gold 1" usw. stehen in keinem Wörterbuch und sollen genau so
+ * angezeigt werden. Übersetzt werden nur die Fehlerkennungen des Backends
+ * (err_no_key, err_player_not_found, err_connection) und "Unranked".
+ *
+ * Vorher lief das über tb(name, "Unranked") — dessen Ersatzwert griff dadurch
+ * bei JEDEM echten Rang, und aus "Diamond 3" wurde "Unranked".
+ */
+export function trank(name) {
+  if (!name) return t("backend.Unranked");
+  const key = `backend.${name}`;
+  return WOERTERBUECHER[AKTUELL]?.[key] ?? en[key] ?? name;
+}
+
 /** Übersetzt eine Kennung des Backends (z. B. "pw_wrong"). */
 export function tb(code, fallback) {
   if (!code) return fallback ?? "";

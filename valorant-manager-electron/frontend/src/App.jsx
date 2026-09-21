@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import * as api from "./api";
-import { t, tb, getLang, setLang, SPRACHEN } from "./i18n";
+import { t, tb, trank, getLang, setLang, SPRACHEN } from "./i18n";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Rank → Hex-Farbe ───────────────────────────────
@@ -508,7 +508,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
   const hasKda = (data.avgKills || 0) + (data.avgDeaths || 0) + (data.avgAssists || 0) > 0;
 
   const stats = [
-    { label: t("ov.rank"), value: tb(data.rankName, "Unranked"), sub: `${data.rr || 0} RR`, color: rankColor(data.rankName) },
+    { label: t("ov.rank"), value: trank(data.rankName), sub: `${data.rr || 0} RR`, color: rankColor(data.rankName) },
     { label: t("ov.level"), value: data.level || 0, sub: t("ov.accountLevel"), color: "#60a5fa" },
     { label: t("ov.streak"),
       value: streakCount > 0 ? `${streakCount}W` : streakCount < 0 ? `${Math.abs(streakCount)}L` : "—",
@@ -1750,7 +1750,7 @@ export default function App() {
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         {d?.rankImageUrl && <img src={d.rankImageUrl} alt="" style={{ width: 14, height: 14 }} />}
                         <span style={{ fontSize: 11, color: rankColor(d?.rankName), fontWeight: 600 }}>
-                          {d?.rankName ? tb(d.rankName) : "—"}
+                          {d?.rankName ? trank(d.rankName) : "—"}
                         </span>
                         <span style={{ fontSize: 10, color: "#374151" }}>#{acc.riotTag}</span>
                       </div>
@@ -1853,7 +1853,7 @@ export default function App() {
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {data?.rankImageUrl && <img src={data.rankImageUrl} alt="" style={{ width: 22, height: 22 }} />}
                       <span style={{ fontSize: 14, fontWeight: 600, color: rc }}>
-                        {tb(data?.rankName, "Unranked")}
+                        {trank(data?.rankName)}
                       </span>
                       {data?.rr != null && (
                         <>
