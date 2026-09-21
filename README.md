@@ -6,6 +6,7 @@ verschlüsselt auf dem eigenen Rechner, die Spielerdaten kommen über die
 Henrik-API.
 
 Zielplattform ist Windows; entwickelt wird auf macOS.
+Oberfläche auf Englisch, in den Einstellungen auf Deutsch umstellbar.
 
 ---
 

@@ -1,0 +1,572 @@
+/**
+ * i18n.js — Sprachen der Oberfläche.
+ *
+ * Englisch ist die Grundsprache, Deutsch die Alternative. Die Auswahl liegt im
+ * localStorage; ein Wechsel lädt das Fenster neu. Das ist bewusst so gelöst:
+ * die Alternative wäre, die Sprache durch dutzende Komponenten zu reichen —
+ * mehr Code, mehr Fehlerquellen, und ein Neuladen dauert hier Millisekunden.
+ *
+ * Meldungen des Backends kommen als KENNUNG (z. B. "pw_wrong") an und werden
+ * hier übersetzt. So bleibt kein Satz in der falschen Sprache hängen.
+ */
+
+const LANG_KEY = "vm-lang";
+export const SPRACHEN = [
+  { code: "en", label: "English" },
+  { code: "de", label: "Deutsch" },
+];
+
+export function getLang() {
+  try {
+    const gespeichert = localStorage.getItem(LANG_KEY);
+    if (gespeichert === "de" || gespeichert === "en") return gespeichert;
+  } catch {
+    // privater Modus o. ä. — dann eben die Grundsprache
+  }
+  return "en";
+}
+
+export function setLang(code) {
+  try { localStorage.setItem(LANG_KEY, code); } catch { }
+  window.location.reload();
+}
+
+const AKTUELL = getLang();
+
+const en = {
+  // ── Allgemein ──
+  "common.cancel": "CANCEL",
+  "common.save": "SAVE",
+  "common.close": "CLOSE",
+  "common.open": "OPEN",
+  "common.change": "CHANGE",
+  "common.enable": "ENABLE",
+  "common.disable": "DISABLE",
+  "common.confirm": "CONFIRM",
+  "common.working": "WORKING...",
+  "common.saving": "SAVING...",
+  "common.loading": "LOADING...",
+  "common.delete": "DELETE",
+  "common.search": "Search...",
+  "common.none": "None",
+
+  // ── Kopfzeile / Navigation ──
+  "nav.accounts": "ACCOUNTS",
+  "nav.overview": "OVERVIEW",
+  "nav.credentials": "CREDENTIALS",
+  "nav.main": "MAIN",
+  "nav.setMain": "★ MAIN",
+  "nav.edit": "EDIT",
+  "nav.sync": "SYNC",
+  "nav.syncing": "SYNCING...",
+  "nav.syncAll": "SYNC ALL",
+  "nav.addAccount": "+ ADD ACCOUNT",
+  "nav.launch": "LAUNCH GAME",
+  "nav.selectAccount": "SELECT AN ACCOUNT",
+  "nav.firstAccount": "+ ADD YOUR FIRST ACCOUNT",
+  "nav.settings": "Settings",
+  "nav.backup": "Back up / restore accounts",
+
+  // ── Account-Dialog ──
+  "account.addTitle": "ADD NEW",
+  "account.addTitle2": "ACCOUNT",
+  "account.editTitle": "EDIT ACCOUNT",
+  "account.riotName": "RIOT NAME",
+  "account.riotTag": "RIOT TAG",
+  "account.login": "LOGIN",
+  "account.password": "PASSWORD",
+  "account.passwordKeep": "PASSWORD (blank = unchanged)",
+  "account.email": "E-MAIL",
+  "account.emailPassword": "E-MAIL PASSWORD",
+  "account.notes": "NOTES",
+  "account.phName": "e.g. PhantomKing",
+  "account.phTag": "e.g. EUW",
+  "account.phLogin": "Username / e-mail",
+  "account.phEmail": "email@example.com",
+  "account.phNotes": "Free text...",
+  "account.deleteTitle": "DELETE ACCOUNT?",
+  "account.deleteBody": "{name} will be removed permanently.",
+
+  // ── Zugangsdaten ──
+  "creds.riotId": "RIOT ID",
+  "creds.copied": "Copied",
+  "creds.show": "Show",
+  "creds.hide": "Hide",
+  "creds.copy": "Copy",
+  "creds.empty": "Not set",
+
+  // ── Übersicht ──
+  "ov.rank": "RANK",
+  "ov.level": "LEVEL",
+  "ov.winrate": "WINRATE",
+  "ov.streak": "STREAK",
+  "ov.kda": "KDA",
+  "ov.topAgents": "TOP AGENTS",
+  "ov.lastGames": "LAST GAMES",
+  "ov.noData": "NO DATA LOADED",
+  "ov.syncNow": "SYNC NOW",
+  "ov.noMatches": "No matches found",
+
+  // ── Rangverlauf ──
+  "graph.title": "RR HISTORY",
+  "graph.day": "DAY",
+  "graph.week": "WEEK",
+  "graph.month": "MONTH",
+  "graph.year": "YEAR",
+  "graph.all": "ALL",
+  "graph.net": "NET",
+  "graph.wl": "W / L",
+  "graph.noneInRange": "No matches in this period",
+  "graph.tooFew": "Not enough matches for a chart",
+
+  // ── API-Key ──
+  "key.setupLabel": "FIRST-TIME SETUP",
+  "key.changeLabel": "CHANGE API KEY",
+  "key.title": "Henrik API key",
+  "key.setupText": "The manager needs your personal API key to load Valorant data. It is checked against Henrik once when you save it, then stored locally only.",
+  "key.changeText": "Replace your API key here. The new one overwrites the old.",
+  "key.placeholder": "HDEV-xxxxxxxx-xxxx-xxxx-...",
+  "key.getOne": "→ Request a key from Henrik (opens in your browser)",
+  "key.checking": "CHECKING KEY...",
+  "key.saveAndStart": "SAVE & START",
+  "key.saveKey": "SAVE KEY",
+  "key.enterOne": "Please enter an API key.",
+  "key.stored": "Stored and verified.",
+
+  // ── Sicherung ──
+  "backup.label": "BACKUP",
+  "backup.title": "Back up & move accounts",
+  "backup.tabExport": "BACK UP",
+  "backup.tabImport": "RESTORE",
+  "backup.exportText": "Writes all accounts into a file protected by your password. On a new computer this file is the only way back to your data — keep the file and the password apart.",
+  "backup.importText": "Reads a backup file. Careful: your current accounts are replaced. A copy of the present state is saved automatically beforehand.",
+  "backup.phNew": "Choose a password (min. 8 characters)",
+  "backup.phRepeat": "Repeat password",
+  "backup.phExisting": "Password of the backup",
+  "backup.warning": "⚠ This password cannot be reset. Without it the file is worthless.",
+  "backup.saveFile": "SAVE FILE",
+  "backup.pickFile": "CHOOSE FILE",
+  "backup.short": "At least 8 characters.",
+  "backup.mismatch": "The two passwords do not match.",
+  "backup.needPassword": "Please enter the backup password.",
+  "backup.writeFailed": "Could not write the file.",
+  "backup.readFailed": "Could not read the file.",
+  "backup.settingsText": "Write accounts into a password-protected file, or read an existing backup.",
+
+  // ── Master-Passwort ──
+  "sec.label": "MASTER PASSWORD",
+  "sec.on": "Enabled",
+  "sec.off": "Disabled",
+  "sec.onText": "You are asked for the password at every start.",
+  "sec.offText": "Protection is tied to this device — no password needed.",
+  "sec.phNew": "Master password (min. 8 characters)",
+  "sec.phRepeat": "Repeat",
+  "sec.phCurrent": "Current master password",
+  "sec.phOld": "Previous password",
+  "sec.phNewChange": "New password (min. 8 characters)",
+  "sec.warning": "⚠ There is no recovery. Make a backup first (the ⤓ button).",
+  "sec.enterCurrent": "Please enter your current master password.",
+  "sec.newShort": "The new password needs at least 8 characters.",
+
+  // ── Entsperren ──
+  "unlock.label": "LOCKED",
+  "unlock.title": "Master password",
+  "unlock.text": "Your accounts are encrypted with a master password. Without it nobody can open them — not even this app.",
+  "unlock.placeholder": "Master password",
+  "unlock.button": "UNLOCK",
+  "unlock.checking": "CHECKING...",
+  "unlock.enter": "Please enter your master password.",
+
+  // ── Einstellungen ──
+  "set.setupLabel": "STEP 2 OF 2 — BASIC SETTINGS",
+  "set.label": "SETTINGS",
+  "set.setupTitle": "Almost done",
+  "set.title": "Settings",
+  "set.setupText": "You can change these any time from the gear icon. The arrows next to each heading explain what a setting does — click one to keep it open.",
+  "set.text": "The ➜ arrows explain every setting. Hover to read, click to keep it open.",
+  "set.finish": "LET'S GO",
+
+  // ── Sprache ──
+  "lang.label": "LANGUAGE",
+  "lang.hintTitle": "Language",
+  "lang.hint1": "Switches the whole interface, including messages from the backend.",
+  "lang.hint2": "The window reloads briefly when you switch. Your accounts are not affected.",
+
+  // ── Oberflächengröße ──
+  "zoom.label": "INTERFACE SIZE",
+  "zoom.hintTitle": "Interface size",
+  "zoom.hint1": "Scales everything in the window — text, buttons, spacing.",
+  "zoom.hint2": "Useful on unusual screen resolutions, or when Windows scales to 125 % or 150 % and everything looks oversized.",
+  "zoom.hint3": "The setting is remembered and applied on the next start.",
+  "zoom.toast": "Interface size: {p} %",
+
+  // ── Aktualisierung ──
+  "upd.label": "UPDATES",
+  "upd.hintTitle": "Updates",
+  "upd.hint1": "Looks for a newer version on GitHub and downloads it. No reinstalling — the app replaces itself on restart.",
+  "upd.hint2": "Nothing happens unasked: you confirm searching, downloading and restarting yourself. Your accounts stay untouched, they live outside the program folder.",
+  "upd.hint3": "Not available in development mode — there is no installed app to replace.",
+  "upd.unknown": "Not checked yet.",
+  "upd.searching": "Searching...",
+  "upd.current": "You have the latest version.",
+  "upd.available": "Version {v} is available.",
+  "upd.downloading": "Downloading... {p} %",
+  "upd.ready": "Version {v} has been downloaded.",
+  "upd.failed": "That did not work.",
+  "upd.check": "CHECK",
+  "upd.checking": "CHECKING...",
+  "upd.download": "DOWNLOAD",
+  "upd.restart": "RESTART",
+  "upd.restarting": "Restarting...",
+  "upd.devMode": "Not available in development mode.",
+  "upd.searchFailed": "Search failed.",
+  "upd.downloadFailed": "Download failed.",
+
+  // ── Hinweise (Erklärungs-Pfeile) ──
+  "hint.sec.title": "Master password",
+  "hint.sec.offLabel": "Off (default):",
+  "hint.sec.offText": "The key for your accounts lives in the Windows credential store. Convenient — the app starts without asking. Downside: any program running under your Windows account can ask Windows for that key.",
+  "hint.sec.onLabel": "On:",
+  "hint.sec.onText": "The key is derived from the password you type and is stored nowhere. Windows cannot hand it over, because it does not have it. In exchange you type it at every start.",
+  "hint.sec.warn": "Forget the password and the accounts are gone — unless you have a backup.",
+  "hint.backup.title": "Backup",
+  "hint.backup.intro": "Writes all accounts into a file protected by its own password. Needed in two cases:",
+  "hint.backup.moveLabel": "Moving:",
+  "hint.backup.moveText": "The normal storage is tied to this computer. On a new PC this file is the only way back to your accounts.",
+  "hint.backup.emergencyLabel": "Emergency:",
+  "hint.backup.emergencyText": "If you forget the master password or reinstall Windows.",
+  "hint.key.title": "API key",
+  "hint.key.text1": "Your personal access to the Henrik API, which supplies rank, RR and match history. Without a valid key those displays stay empty — your stored credentials keep working regardless.",
+  "hint.key.text2": "The key is stored locally only and verified once when you save it.",
+
+  // ── Meldungen ──
+  "toast.accountCreated": "Account created",
+  "toast.accountUpdated": "Account updated",
+  "toast.accountDeleted": "Account deleted",
+  "toast.mainSet": "Main account set",
+  "toast.keySaved": "API key saved",
+  "toast.keyUpdated": "API key updated",
+  "toast.syncOk": "Sync successful",
+  "toast.syncFailed": "Sync failed",
+  "toast.backendDown": "Backend not reachable",
+  "toast.desktopOnly": "Only available in the desktop app",
+  "toast.backedUp": "{n} accounts backed up.",
+  "toast.imported": "{n} accounts restored.",
+
+  // ── Fehler ──
+  "err.backendDown": "Backend not reachable.",
+  "err.denied": "Access denied. Please restart the app.",
+  "err.desktopOnly": "Only available in the desktop app.",
+  "err.generic": "That did not work.",
+  "err.riotNotFound": "Riot Client not found. Please start it manually once.",
+  "err.riotWindows": "The Riot Client can only be started on Windows.",
+
+  // ── Kennungen aus dem Backend ──
+  "backend.key_empty": "Please enter a key.",
+  "backend.key_prefix": "A Henrik key starts with \"HDEV-\". Please paste the whole key.",
+  "backend.key_short": "That key looks incomplete.",
+  "backend.key_rejected": "Henrik rejected the key. Please check it.",
+  "backend.key_ratelimited": "Too many requests to Henrik. Please wait a moment.",
+  "backend.key_ok": "Key verified and saved.",
+  "backend.key_ok_offline": "Key saved (not verified — no connection to Henrik).",
+  "backend.unlock_empty": "Please enter your master password.",
+  "backend.unlock_ok": "Unlocked.",
+  "backend.pw_wrong": "Wrong master password.",
+  "backend.old_pw_wrong": "The previous password is not correct.",
+  "backend.pw_too_short": "The master password needs at least 8 characters.",
+  "backend.pw_already_on": "Already enabled.",
+  "backend.pw_not_on": "Not enabled.",
+  "backend.pw_locked": "Not possible — the data is locked.",
+  "backend.pw_enabled": "Master password active. You will be asked for it from the next start.",
+  "backend.pw_disabled": "Master password removed. Protection is tied to the device again.",
+  "backend.pw_changed": "Master password changed.",
+  "backend.export_pw_short": "Please choose a password with at least 8 characters.",
+  "backend.export_ok": "Accounts exported.",
+  "backend.export_failed": "Export failed.",
+  "backend.import_pw_empty": "Please enter the password.",
+  "backend.import_empty_file": "The file is empty.",
+  "backend.import_not_our_file": "That is not a Valorant Manager backup file.",
+  "backend.import_wrong_pw": "Wrong password, or the file is damaged.",
+  "backend.import_no_accounts": "The file contains no accounts — nothing was changed.",
+  "backend.import_ok": "Accounts restored.",
+  "backend.sync_ok": "Success",
+  "backend.sync_timeout": "Timed out",
+  "backend.sync_failed": "Sync failed",
+  "backend.err_no_key": "No API key",
+  "backend.err_player_not_found": "Player not found",
+  "backend.err_connection": "Connection error",
+  "backend.Unranked": "Unranked",
+};
+
+const de = {
+  "common.cancel": "ABBRECHEN",
+  "common.save": "SPEICHERN",
+  "common.close": "SCHLIESSEN",
+  "common.open": "ÖFFNEN",
+  "common.change": "ÄNDERN",
+  "common.enable": "EINSCHALTEN",
+  "common.disable": "AUSSCHALTEN",
+  "common.confirm": "BESTÄTIGEN",
+  "common.working": "MOMENT...",
+  "common.saving": "SPEICHERT...",
+  "common.loading": "LÄDT...",
+  "common.delete": "LÖSCHEN",
+  "common.search": "Suchen...",
+  "common.none": "Keine",
+
+  "nav.accounts": "ACCOUNTS",
+  "nav.overview": "ÜBERSICHT",
+  "nav.credentials": "ZUGANGSDATEN",
+  "nav.main": "MAIN",
+  "nav.setMain": "★ MAIN",
+  "nav.edit": "BEARBEITEN",
+  "nav.sync": "SYNC",
+  "nav.syncing": "SYNC...",
+  "nav.syncAll": "ALLE SYNCEN",
+  "nav.addAccount": "+ ACCOUNT",
+  "nav.launch": "SPIEL STARTEN",
+  "nav.selectAccount": "ACCOUNT AUSWÄHLEN",
+  "nav.firstAccount": "+ ERSTEN ACCOUNT ANLEGEN",
+  "nav.settings": "Einstellungen",
+  "nav.backup": "Accounts sichern / einlesen",
+
+  "account.addTitle": "NEUEN ACCOUNT",
+  "account.addTitle2": "HINZUFÜGEN",
+  "account.editTitle": "ACCOUNT BEARBEITEN",
+  "account.riotName": "RIOT NAME",
+  "account.riotTag": "RIOT TAG",
+  "account.login": "LOGIN",
+  "account.password": "PASSWORT",
+  "account.passwordKeep": "PASSWORT (leer = unverändert)",
+  "account.email": "E-MAIL",
+  "account.emailPassword": "E-MAIL PASSWORT",
+  "account.notes": "NOTIZEN",
+  "account.phName": "z.B. PhantomKing",
+  "account.phTag": "z.B. EUW",
+  "account.phLogin": "Benutzername / E-Mail",
+  "account.phEmail": "email@example.com",
+  "account.phNotes": "Freitext...",
+  "account.deleteTitle": "ACCOUNT LÖSCHEN?",
+  "account.deleteBody": "{name} wird unwiderruflich gelöscht.",
+
+  "creds.riotId": "RIOT ID",
+  "creds.copied": "Kopiert",
+  "creds.show": "Anzeigen",
+  "creds.hide": "Verbergen",
+  "creds.copy": "Kopieren",
+  "creds.empty": "Nicht gesetzt",
+
+  "ov.rank": "RANK",
+  "ov.level": "LEVEL",
+  "ov.winrate": "WINRATE",
+  "ov.streak": "STREAK",
+  "ov.kda": "KDA",
+  "ov.topAgents": "TOP AGENTS",
+  "ov.lastGames": "LETZTE SPIELE",
+  "ov.noData": "KEINE DATEN GELADEN",
+  "ov.syncNow": "JETZT SYNCHRONISIEREN",
+  "ov.noMatches": "Keine Matches gefunden",
+
+  "graph.title": "RR-VERLAUF",
+  "graph.day": "TAG",
+  "graph.week": "WOCHE",
+  "graph.month": "MONAT",
+  "graph.year": "JAHR",
+  "graph.all": "ALLE",
+  "graph.net": "NETTO",
+  "graph.wl": "W / L",
+  "graph.noneInRange": "Keine Matches in diesem Zeitraum",
+  "graph.tooFew": "Zu wenige Matches für einen Verlauf",
+
+  "key.setupLabel": "ERSTEINRICHTUNG",
+  "key.changeLabel": "API-KEY WECHSELN",
+  "key.title": "Henrik API-Key",
+  "key.setupText": "Damit der Manager Valorant-Daten laden kann, brauchst du einen persönlichen API-Key. Er wird beim Speichern einmal gegen Henrik geprüft und danach nur lokal abgelegt.",
+  "key.changeText": "Hier kannst du deinen API-Key ersetzen. Der neue Key überschreibt den bisherigen.",
+  "key.placeholder": "HDEV-xxxxxxxx-xxxx-xxxx-...",
+  "key.getOne": "→ Key bei Henrik anfragen (öffnet im Browser)",
+  "key.checking": "PRÜFT KEY...",
+  "key.saveAndStart": "SPEICHERN & STARTEN",
+  "key.saveKey": "KEY SPEICHERN",
+  "key.enterOne": "Bitte einen API-Key eingeben.",
+  "key.stored": "Hinterlegt und geprüft.",
+
+  "backup.label": "SICHERUNG",
+  "backup.title": "Accounts sichern & umziehen",
+  "backup.tabExport": "SICHERN",
+  "backup.tabImport": "EINLESEN",
+  "backup.exportText": "Schreibt alle Accounts in eine Datei, die mit deinem Passwort geschützt ist. Nur damit kommst du auf einem neuen Rechner wieder an die Daten — bewahre beides getrennt auf.",
+  "backup.importText": "Liest eine Sicherung ein. Achtung: die aktuellen Accounts werden dabei ersetzt. Eine Kopie des jetzigen Stands wird vorher automatisch abgelegt.",
+  "backup.phNew": "Passwort vergeben (min. 8 Zeichen)",
+  "backup.phRepeat": "Passwort wiederholen",
+  "backup.phExisting": "Passwort der Sicherung",
+  "backup.warning": "⚠ Dieses Passwort lässt sich nicht zurücksetzen. Ohne es ist die Datei wertlos.",
+  "backup.saveFile": "DATEI SPEICHERN",
+  "backup.pickFile": "DATEI WÄHLEN",
+  "backup.short": "Mindestens 8 Zeichen.",
+  "backup.mismatch": "Die beiden Passwörter stimmen nicht überein.",
+  "backup.needPassword": "Bitte das Passwort der Sicherung eingeben.",
+  "backup.writeFailed": "Datei konnte nicht geschrieben werden.",
+  "backup.readFailed": "Datei konnte nicht gelesen werden.",
+  "backup.settingsText": "Accounts in eine passwortgeschützte Datei schreiben oder eine vorhandene Sicherung einlesen.",
+
+  "sec.label": "MASTER-PASSWORT",
+  "sec.on": "Eingeschaltet",
+  "sec.off": "Ausgeschaltet",
+  "sec.onText": "Beim Start wird nach dem Passwort gefragt.",
+  "sec.offText": "Der Schutz hängt am Gerät — kein Passwort nötig.",
+  "sec.phNew": "Master-Passwort (min. 8 Zeichen)",
+  "sec.phRepeat": "Wiederholen",
+  "sec.phCurrent": "Aktuelles Master-Passwort",
+  "sec.phOld": "Bisheriges Passwort",
+  "sec.phNewChange": "Neues Passwort (min. 8 Zeichen)",
+  "sec.warning": "⚠ Es gibt keine Wiederherstellung. Lege dir vorher eine Sicherung an (Knopf ⤓).",
+  "sec.enterCurrent": "Bitte das aktuelle Master-Passwort eingeben.",
+  "sec.newShort": "Das neue Passwort braucht mindestens 8 Zeichen.",
+
+  "unlock.label": "GESPERRT",
+  "unlock.title": "Master-Passwort",
+  "unlock.text": "Deine Accounts sind mit einem Master-Passwort verschlüsselt. Ohne dieses Passwort kann sie niemand öffnen — auch die App selbst nicht.",
+  "unlock.placeholder": "Master-Passwort",
+  "unlock.button": "ENTSPERREN",
+  "unlock.checking": "PRÜFT...",
+  "unlock.enter": "Bitte das Master-Passwort eingeben.",
+
+  "set.setupLabel": "SCHRITT 2 VON 2 — GRUNDEINSTELLUNGEN",
+  "set.label": "EINSTELLUNGEN",
+  "set.setupTitle": "Fast fertig",
+  "set.title": "Einstellungen",
+  "set.setupText": "Diese Einstellungen kannst du jederzeit über das Zahnrad ändern. Die Pfeile neben den Überschriften erklären, was eine Einstellung bewirkt — zum Festhalten anklicken.",
+  "set.text": "Die Pfeile ➜ erklären jede Einstellung. Überfahren zeigt die Erklärung, Anklicken hält sie fest.",
+  "set.finish": "LOS GEHT'S",
+
+  "lang.label": "SPRACHE",
+  "lang.hintTitle": "Sprache",
+  "lang.hint1": "Stellt die gesamte Oberfläche um, einschliesslich der Meldungen aus dem Backend.",
+  "lang.hint2": "Beim Wechsel lädt das Fenster kurz neu. Deine Accounts sind davon nicht betroffen.",
+
+  "zoom.label": "OBERFLÄCHENGRÖSSE",
+  "zoom.hintTitle": "Oberflächengröße",
+  "zoom.hint1": "Vergrössert oder verkleinert alles im Fenster — Schrift, Knöpfe, Abstände.",
+  "zoom.hint2": "Nützlich bei ungewöhnlichen Bildschirmauflösungen oder wenn Windows auf 125 % oder 150 % skaliert. Dann wirkt die Oberfläche sonst schnell zu gross.",
+  "zoom.hint3": "Die Einstellung bleibt gespeichert und gilt ab dem nächsten Start automatisch.",
+  "zoom.toast": "Oberflächengröße: {p} %",
+
+  "upd.label": "AKTUALISIERUNG",
+  "upd.hintTitle": "Aktualisierung",
+  "upd.hint1": "Sucht auf GitHub nach einer neueren Fassung und lädt sie herunter. Du musst nichts neu installieren — beim Neustart ersetzt sich die App selbst.",
+  "upd.hint2": "Es passiert nichts ungefragt: Suchen, Herunterladen und Neustarten bestätigst du jeweils selbst. Deine Accounts bleiben dabei unberührt, sie liegen ausserhalb des Programmordners.",
+  "upd.hint3": "Im Entwicklungsmodus nicht verfügbar — dort gibt es keine installierte App, die sich ersetzen liesse.",
+  "upd.unknown": "Noch nicht nachgesehen.",
+  "upd.searching": "Suche läuft...",
+  "upd.current": "Du hast die neueste Fassung.",
+  "upd.available": "Version {v} ist verfügbar.",
+  "upd.downloading": "Wird heruntergeladen... {p} %",
+  "upd.ready": "Version {v} ist fertig geladen.",
+  "upd.failed": "Es hat nicht geklappt.",
+  "upd.check": "SUCHEN",
+  "upd.checking": "SUCHT...",
+  "upd.download": "HERUNTERLADEN",
+  "upd.restart": "NEU STARTEN",
+  "upd.restarting": "App startet neu...",
+  "upd.devMode": "Im Entwicklungsmodus nicht verfügbar.",
+  "upd.searchFailed": "Suche fehlgeschlagen.",
+  "upd.downloadFailed": "Herunterladen fehlgeschlagen.",
+
+  "hint.sec.title": "Master-Passwort",
+  "hint.sec.offLabel": "Aus (Standard):",
+  "hint.sec.offText": "Der Schlüssel für deine Accounts liegt im Schlüsselbund von Windows. Bequem — die App startet ohne Nachfrage. Nachteil: jedes Programm, das unter deinem Windows-Konto läuft, kann Windows um diesen Schlüssel bitten.",
+  "hint.sec.onLabel": "Ein:",
+  "hint.sec.onText": "Der Schlüssel entsteht erst aus deinem eingetippten Passwort und wird nirgends gespeichert. Windows kann ihn nicht herausgeben, weil es ihn nicht kennt. Dafür musst du ihn bei jedem Start eingeben.",
+  "hint.sec.warn": "Vergisst du das Passwort, sind die Accounts verloren — es sei denn, du hast eine Sicherung.",
+  "hint.backup.title": "Sicherung",
+  "hint.backup.intro": "Schreibt alle Accounts in eine Datei, die mit einem eigenen Passwort geschützt ist. Nötig für zwei Fälle:",
+  "hint.backup.moveLabel": "Umzug:",
+  "hint.backup.moveText": "Die normale Ablage ist an diesen Rechner gebunden. Auf einem neuen PC kommst du nur über diese Datei wieder an deine Accounts.",
+  "hint.backup.emergencyLabel": "Notfall:",
+  "hint.backup.emergencyText": "Falls du das Master-Passwort vergisst oder Windows neu aufsetzt.",
+  "hint.key.title": "API-Key",
+  "hint.key.text1": "Dein persönlicher Zugang zur Henrik-API, über die Rang, RR und Match-Verlauf geladen werden. Ohne gültigen Key bleiben diese Anzeigen leer — die gespeicherten Zugangsdaten funktionieren trotzdem weiter.",
+  "hint.key.text2": "Der Key wird nur lokal abgelegt und beim Speichern einmal geprüft.",
+
+  "toast.accountCreated": "Account erstellt",
+  "toast.accountUpdated": "Account aktualisiert",
+  "toast.accountDeleted": "Account gelöscht",
+  "toast.mainSet": "Main-Account gesetzt",
+  "toast.keySaved": "API-Key gespeichert",
+  "toast.keyUpdated": "API-Key aktualisiert",
+  "toast.syncOk": "Synchronisierung erfolgreich",
+  "toast.syncFailed": "Sync fehlgeschlagen",
+  "toast.backendDown": "Backend nicht erreichbar",
+  "toast.desktopOnly": "Nur in der Desktop-App verfügbar",
+  "toast.backedUp": "{n} Accounts gesichert.",
+  "toast.imported": "{n} Accounts übernommen.",
+
+  "err.backendDown": "Backend nicht erreichbar.",
+  "err.denied": "Zugriff verweigert. Bitte die App neu starten.",
+  "err.desktopOnly": "Nur in der Desktop-App verfügbar.",
+  "err.generic": "Hat nicht geklappt.",
+  "err.riotNotFound": "Riot Client nicht gefunden. Bitte einmal von Hand starten.",
+  "err.riotWindows": "Der Riot Client lässt sich nur unter Windows starten.",
+
+  "backend.key_empty": "Kein Key eingegeben.",
+  "backend.key_prefix": "Ein Henrik-Key beginnt mit \"HDEV-\". Bitte den ganzen Key einfügen.",
+  "backend.key_short": "Der Key sieht unvollständig aus.",
+  "backend.key_rejected": "Henrik hat den Key abgelehnt. Bitte prüfen.",
+  "backend.key_ratelimited": "Zu viele Anfragen an Henrik. Bitte kurz warten.",
+  "backend.key_ok": "Key geprüft und gespeichert.",
+  "backend.key_ok_offline": "Key gespeichert (ohne Online-Prüfung — keine Verbindung zu Henrik).",
+  "backend.unlock_empty": "Bitte das Master-Passwort eingeben.",
+  "backend.unlock_ok": "Entsperrt.",
+  "backend.pw_wrong": "Falsches Master-Passwort.",
+  "backend.old_pw_wrong": "Das bisherige Passwort stimmt nicht.",
+  "backend.pw_too_short": "Das Master-Passwort braucht mindestens 8 Zeichen.",
+  "backend.pw_already_on": "Ist bereits eingeschaltet.",
+  "backend.pw_not_on": "Ist gar nicht eingeschaltet.",
+  "backend.pw_locked": "Nicht möglich — die Daten sind gesperrt.",
+  "backend.pw_enabled": "Master-Passwort aktiv. Ab dem nächsten Start wird danach gefragt.",
+  "backend.pw_disabled": "Master-Passwort entfernt. Der Schutz hängt wieder am Gerät.",
+  "backend.pw_changed": "Master-Passwort geändert.",
+  "backend.export_pw_short": "Bitte ein Passwort mit mindestens 8 Zeichen wählen.",
+  "backend.export_ok": "Accounts exportiert.",
+  "backend.export_failed": "Export fehlgeschlagen.",
+  "backend.import_pw_empty": "Bitte das Passwort eingeben.",
+  "backend.import_empty_file": "Die Datei ist leer.",
+  "backend.import_not_our_file": "Das ist keine Exportdatei des Valorant Managers.",
+  "backend.import_wrong_pw": "Falsches Passwort oder beschädigte Datei.",
+  "backend.import_no_accounts": "Die Datei enthält keine Accounts — es wurde nichts geändert.",
+  "backend.import_ok": "Accounts übernommen.",
+  "backend.sync_ok": "Erfolgreich",
+  "backend.sync_timeout": "Zeitüberschreitung",
+  "backend.sync_failed": "Sync fehlgeschlagen",
+  "backend.err_no_key": "Kein API-Key",
+  "backend.err_player_not_found": "Spieler nicht gefunden",
+  "backend.err_connection": "Verbindungsfehler",
+  "backend.Unranked": "Unranked",
+};
+
+const WOERTERBUECHER = { en, de };
+
+/**
+ * Übersetzt einen Schlüssel. Platzhalter wie {n} werden aus `vars` ersetzt.
+ * Fehlt ein Schlüssel, kommt der englische Text — und nur wenn auch der fehlt,
+ * der Schlüssel selbst. So bleibt die Oberfläche in jedem Fall benutzbar.
+ */
+export function t(key, vars) {
+  let text = WOERTERBUECHER[AKTUELL]?.[key] ?? en[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      text = text.split(`{${k}}`).join(String(v));
+    }
+  }
+  return text;
+}
+
+/** Übersetzt eine Kennung des Backends (z. B. "pw_wrong"). */
+export function tb(code, fallback) {
+  if (!code) return fallback ?? "";
+  const key = `backend.${code}`;
+  const treffer = WOERTERBUECHER[AKTUELL]?.[key] ?? en[key];
+  // Unbekannte Kennung: lieber den Originaltext zeigen als eine leere Zeile
+  return treffer ?? fallback ?? code;
+}

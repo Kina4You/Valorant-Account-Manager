@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import * as api from "./api";
+import { t, tb, getLang, setLang, SPRACHEN } from "./i18n";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 // ─── Rank → Hex-Farbe ───────────────────────────────
@@ -91,8 +92,8 @@ function InfoHint({ title, children, width = 280 }) {
 // ─── Toast Notification ─────────────────────────────
 function Toast({ message, type, onClose }) {
   useEffect(() => {
-    const t = setTimeout(onClose, 3000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
   }, [onClose]);
 
   const colors = { success: "#22c55e", error: "#ff4655", info: "#60a5fa" };
@@ -158,13 +159,13 @@ function AccountModal({ account, index, onClose, onSave }) {
   };
 
   const fields = [
-    { key: "riotName", label: "RIOT NAME", placeholder: "z.B. PhantomKing" },
-    { key: "riotTag", label: "RIOT TAG", placeholder: "z.B. EUW" },
-    { key: "loginName", label: "LOGIN", placeholder: "Benutzername / E-Mail" },
-    { key: "password", label: isEdit ? "PASSWORT (leer = unverändert)" : "PASSWORT", placeholder: "••••••••", type: "password" },
-    { key: "email", label: "E-MAIL", placeholder: "email@example.com" },
-    { key: "emailPassword", label: "E-MAIL PASSWORT", placeholder: "••••••••", type: "password" },
-    { key: "notes", label: "NOTIZEN", placeholder: "Freitext...", multiline: true },
+    { key: "riotName", label: t("account.riotName"), placeholder: t("account.phName") },
+    { key: "riotTag", label: t("account.riotTag"), placeholder: t("account.phTag") },
+    { key: "loginName", label: t("account.login"), placeholder: t("account.phLogin") },
+    { key: "password", label: isEdit ? t("account.passwordKeep") : t("account.password"), placeholder: "••••••••", type: "password" },
+    { key: "email", label: t("account.email"), placeholder: t("account.phEmail") },
+    { key: "emailPassword", label: t("account.emailPassword"), placeholder: "••••••••", type: "password" },
+    { key: "notes", label: t("account.notes"), placeholder: t("account.phNotes"), multiline: true },
   ];
 
   return (
@@ -184,8 +185,8 @@ function AccountModal({ account, index, onClose, onSave }) {
           fontFamily: "'Bebas Neue', sans-serif",
           fontSize: 24, letterSpacing: 3, color: "#fff", marginBottom: 20
         }}>
-          {isEdit ? "ACCOUNT BEARBEITEN" : "NEUEN ACCOUNT"}
-          {!isEdit && <div style={{ fontSize: 14, color: "#4b5563", letterSpacing: 2, fontFamily: "'Rajdhani', sans-serif" }}>HINZUFÜGEN</div>}
+          {isEdit ? t("account.editTitle") : t("account.addTitle")}
+          {!isEdit && <div style={{ fontSize: 14, color: "#4b5563", letterSpacing: 2, fontFamily: "'Rajdhani', sans-serif" }}>{t("account.addTitle2")}</div>}
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -217,9 +218,9 @@ function AccountModal({ account, index, onClose, onSave }) {
         </div>
 
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-          <button onClick={onClose} style={cancelBtnStyle}>ABBRECHEN</button>
+          <button onClick={onClose} style={cancelBtnStyle}>{t("common.cancel")}</button>
           <button onClick={handleSubmit} disabled={loading} style={saveBtnStyle}>
-            {loading ? "SPEICHERT..." : "SPEICHERN"}
+            {loading ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </div>
@@ -242,15 +243,15 @@ function DeleteModal({ name, onConfirm, onClose }) {
         animation: "fadeUp 0.2s ease"
       }}>
         <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 2, color: "#fff", marginBottom: 8 }}>
-          ACCOUNT LÖSCHEN?
+          {t("account.deleteTitle")}
         </div>
         <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 24, lineHeight: 1.6 }}>
           <span style={{ color: "#ff4655" }}>{name}</span> wird unwiderruflich gelöscht.
         </p>
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={cancelBtnStyle}>ABBRECHEN</button>
+          <button onClick={onClose} style={cancelBtnStyle}>{t("common.cancel")}</button>
           <button onClick={onConfirm} style={{ ...saveBtnStyle, background: "rgba(255,70,85,0.2)", borderColor: "rgba(255,70,85,0.5)" }}>
-            LÖSCHEN
+            {t("common.delete")}
           </button>
         </div>
       </div>
@@ -282,17 +283,17 @@ function CredentialsTab({ index, riotName, riotTag }) {
 
   if (!creds) return (
     <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 200, color: "#4b5563" }}>
-      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12 }}>LADE...</span>
+      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: 12 }}>{t("common.loading")}</span>
     </div>
   );
 
   const fields = [
-    { key: "riotId", label: "RIOT ID", value: `${riotName}#${riotTag}`, sensitive: false },
-    { key: "loginName", label: "LOGIN", value: creds.loginName, sensitive: false },
-    { key: "password", label: "PASSWORT", value: creds.password, sensitive: true },
-    { key: "email", label: "E-MAIL", value: creds.email, sensitive: false },
-    { key: "emailPassword", label: "E-MAIL PASSWORT", value: creds.emailPassword, sensitive: true },
-    { key: "notes", label: "NOTIZEN", value: creds.notes, sensitive: false },
+    { key: "riotId", label: t("creds.riotId"), value: `${riotName}#${riotTag}`, sensitive: false },
+    { key: "loginName", label: t("account.login"), value: creds.loginName, sensitive: false },
+    { key: "password", label: t("account.password"), value: creds.password, sensitive: true },
+    { key: "email", label: t("account.email"), value: creds.email, sensitive: false },
+    { key: "emailPassword", label: t("account.emailPassword"), value: creds.emailPassword, sensitive: true },
+    { key: "notes", label: t("account.notes"), value: creds.notes, sensitive: false },
   ].filter(f => f.value);
 
   return (
@@ -355,11 +356,11 @@ function RankGraph({ matchHistory }) {
 
   const now = Date.now();
   const ranges = {
-    day:   { label: "TAG",    ms: 24 * 3600e3 },
-    week:  { label: "WOCHE",  ms: 7 * 24 * 3600e3 },
-    month: { label: "MONAT",  ms: 30 * 24 * 3600e3 },
-    year:  { label: "JAHR",   ms: 365 * 24 * 3600e3 },
-    all:   { label: "ALLE",   ms: Infinity },
+    day:   { label: t("graph.day"),    ms: 24 * 3600e3 },
+    week:  { label: t("graph.week"),  ms: 7 * 24 * 3600e3 },
+    month: { label: t("graph.month"),  ms: 30 * 24 * 3600e3 },
+    year:  { label: t("graph.year"),   ms: 365 * 24 * 3600e3 },
+    all:   { label: t("graph.all"),   ms: Infinity },
   };
 
   const history = (matchHistory || [])
@@ -417,14 +418,14 @@ function RankGraph({ matchHistory }) {
       {/* Zusammenfassung */}
       <div style={{ display: "flex", gap: 18, marginBottom: 12 }}>
         <div>
-          <span style={{ fontSize: 9, color: "#4b5563", fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>NETTO</span>
+          <span style={{ fontSize: 9, color: "#4b5563", fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>{t("graph.net")}</span>
           <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Bebas Neue', sans-serif",
             color: netChange > 0 ? "#22c55e" : netChange < 0 ? "#ef4444" : "#6b7280" }}>
             {netChange > 0 ? "+" : ""}{netChange} RR
           </div>
         </div>
         <div>
-          <span style={{ fontSize: 9, color: "#4b5563", fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>W / L</span>
+          <span style={{ fontSize: 9, color: "#4b5563", fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>{t("graph.wl")}</span>
           <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Bebas Neue', sans-serif", color: "#e8e8e8" }}>
             <span style={{ color: "#22c55e" }}>{wins}</span>
             <span style={{ color: "#4b5563" }}> / </span>
@@ -463,7 +464,7 @@ function RankGraph({ matchHistory }) {
       ) : (
         <div style={{ height: 200, display: "flex", alignItems: "center", justifyContent: "center",
           color: "#4b5563", fontSize: 12, fontFamily: "'Space Mono', monospace" }}>
-          {filtered.length === 0 ? "Keine Matches in diesem Zeitraum" : "Zu wenige Matches für einen Verlauf"}
+          {filtered.length === 0 ? t("graph.noneInRange") : t("graph.tooFew")}
         </div>
       )}
     </div>
@@ -475,7 +476,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
   if (!data) return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: 220, gap: 16 }}>
       <div style={{ color: "#4b5563", fontSize: 13, fontFamily: "'Space Mono', monospace", letterSpacing: 1 }}>
-        KEINE DATEN GELADEN
+        {t("ov.noData")}
       </div>
       {/* flex:"0 0 auto" wie beim Knopf im leeren Zustand: in dieser Spalte
           wuerde das flex:1 aus saveBtnStyle den Knopf senkrecht strecken. */}
@@ -484,7 +485,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
         disabled={syncing}
         style={{ ...saveBtnStyle, flex: "0 0 auto", padding: "11px 22px" }}
       >
-        {syncing ? "SYNCHRONISIERT..." : "JETZT SYNCHRONISIEREN"}
+        {syncing ? t("nav.syncing") : t("ov.syncNow")}
       </button>
     </div>
   );
@@ -507,13 +508,13 @@ function OverviewTab({ account, data, onSync, syncing }) {
   const hasKda = (data.avgKills || 0) + (data.avgDeaths || 0) + (data.avgAssists || 0) > 0;
 
   const stats = [
-    { label: "RANK", value: data.rankName || "Unranked", sub: `${data.rr || 0} RR`, color: rankColor(data.rankName) },
-    { label: "LEVEL", value: data.level || 0, sub: "Account Level", color: "#60a5fa" },
-    { label: "STREAK",
+    { label: t("ov.rank"), value: tb(data.rankName, "Unranked"), sub: `${data.rr || 0} RR`, color: rankColor(data.rankName) },
+    { label: t("ov.level"), value: data.level || 0, sub: "Account Level", color: "#60a5fa" },
+    { label: t("ov.streak"),
       value: streakCount > 0 ? `${streakCount}W` : streakCount < 0 ? `${Math.abs(streakCount)}L` : "—",
       sub: "aktuell", color: streakCount > 0 ? "#22c55e" : streakCount < 0 ? "#ef4444" : "#6b7280" },
-    { label: "WINRATE", value: `${winRate}%`, sub: `${data.lastGames?.length || 0} Matches`, color: winRate >= 50 ? "#22c55e" : "#f59e0b" },
-    { label: "KDA",
+    { label: t("ov.winrate"), value: `${winRate}%`, sub: `${data.lastGames?.length || 0} Matches`, color: winRate >= 50 ? "#22c55e" : "#f59e0b" },
+    { label: t("ov.kda"),
       value: hasKda ? kdaRatio.toFixed(2) : "—",
       sub: hasKda
         ? `${data.avgKills.toFixed(1)} / ${data.avgDeaths.toFixed(1)} / ${data.avgAssists.toFixed(1)}`
@@ -562,7 +563,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
               ))}
             </div>
           ) : (
-            <div style={{ color: "#4b5563", fontSize: 12, fontFamily: "'Space Mono', monospace" }}>Keine Matches gefunden</div>
+            <div style={{ color: "#4b5563", fontSize: 12, fontFamily: "'Space Mono', monospace" }}>{t("ov.noMatches")}</div>
           )}
         </div>
 
@@ -597,7 +598,7 @@ function OverviewTab({ account, data, onSync, syncing }) {
               ))}
             </div>
           ) : (
-            <div style={{ color: "#4b5563", fontSize: 12, fontFamily: "'Space Mono', monospace" }}>Keine Daten</div>
+            <div style={{ color: "#4b5563", fontSize: 12, fontFamily: "'Space Mono', monospace" }}>{t("ov.noData")}</div>
           )}
         </div>
       </div>
@@ -614,7 +615,7 @@ function ApiKeyManager({ mode, onSaved, onClose }) {
   const [error, setError] = useState("");
 
   const save = async () => {
-    if (!key.trim()) { setError("Bitte einen API-Key eingeben."); return; }
+    if (!key.trim()) { setError(t("key.enterOne")); return; }
     setSaving(true);
     setError("");
     try {
@@ -623,10 +624,10 @@ function ApiKeyManager({ mode, onSaved, onClose }) {
         onSaved();
       } else {
         // Begründung kommt aus der Prüfung im Backend
-        setError(res?.message || "Key wurde abgelehnt. Bitte prüfen.");
+        setError(tb(res?.message, t("err.generic")));
       }
     } catch (e) {
-      setError(e?.message || "Backend nicht erreichbar.");
+      setError(e?.message || t("err.backendDown"));
     } finally {
       setSaving(false);
     }
@@ -644,22 +645,22 @@ function ApiKeyManager({ mode, onSaved, onClose }) {
         padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
         <div style={{ fontSize: 9, letterSpacing: 3, color: "#ff4655", fontFamily: "'Space Mono', monospace", marginBottom: 8 }}>
-          {isSetup ? "ERSTEINRICHTUNG" : "API-KEY WECHSELN"}
+          {isSetup ? t("key.setupLabel") : t("key.changeLabel")}
         </div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e8e8", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginBottom: 10 }}>
-          Henrik API-Key
+          {t("key.title")}
         </div>
         <div style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.5, marginBottom: 16 }}>
           {isSetup
-            ? "Damit der Manager Valorant-Daten laden kann, brauchst du einen persönlichen API-Key. Er wird beim Speichern einmal gegen Henrik geprüft und danach nur lokal abgelegt."
-            : "Hier kannst du deinen API-Key ersetzen. Der neue Key überschreibt den bisherigen."}
+            ? t("key.setupText")
+            : t("key.changeText")}
         </div>
 
         <input
           type="text"
           value={key}
           onChange={e => setKey(e.target.value)}
-          placeholder="HDEV-xxxxxxxx-xxxx-xxxx-..."
+          placeholder={t("key.placeholder")}
           autoFocus
           onKeyDown={e => { if (e.key === "Enter") save(); }}
           style={{ ...inputStyle, marginBottom: 10, fontFamily: "'Space Mono', monospace", fontSize: 12 }}
@@ -680,15 +681,15 @@ function ApiKeyManager({ mode, onSaved, onClose }) {
           }}
           style={{ fontSize: 11, color: "#60a5fa", textDecoration: "none", display: "inline-block", marginBottom: 18, cursor: "pointer" }}
         >
-          → Key bei Henrik anfragen (öffnet im Browser)
+          {t("key.getOne")}
         </a>
 
         <div style={{ display: "flex", gap: 10 }}>
           {!isSetup && (
-            <button onClick={onClose} style={cancelBtnStyle}>ABBRECHEN</button>
+            <button onClick={onClose} style={cancelBtnStyle}>{t("common.cancel")}</button>
           )}
           <button onClick={save} disabled={saving} style={saveBtnStyle}>
-            {saving ? "PRÜFT KEY..." : isSetup ? "SPEICHERN & STARTEN" : "KEY SPEICHERN"}
+            {saving ? t("key.checking") : isSetup ? t("key.saveAndStart") : t("key.saveKey")}
           </button>
         </div>
       </div>
@@ -708,36 +709,36 @@ function BackupManager({ onClose, onImported, showToast }) {
   const [error, setError] = useState("");
 
   const doExport = async () => {
-    if (pw.length < 8) { setError("Mindestens 8 Zeichen."); return; }
-    if (pw !== pw2) { setError("Die beiden Passwörter stimmen nicht überein."); return; }
+    if (pw.length < 8) { setError(t("backup.short")); return; }
+    if (pw !== pw2) { setError(t("backup.mismatch")); return; }
     setBusy(true); setError("");
     try {
       const res = await api.exportAccounts(pw);
-      if (!res?.success) { setError(res?.message || "Export fehlgeschlagen."); return; }
+      if (!res?.success) { setError(tb(res?.message, t("err.generic"))); return; }
       const saved = await window.electron?.saveExport(res.content);
       if (saved?.canceled) { setError(""); return; }
-      if (!saved?.ok) { setError(saved?.error || "Datei konnte nicht geschrieben werden."); return; }
-      showToast(`${res.count} Accounts gesichert.`);
+      if (!saved?.ok) { setError(saved?.error || t("backup.writeFailed")); return; }
+      showToast(t("toast.backedUp", { n: res.count }));
       onClose();
     } catch (e) {
-      setError(e?.message || "Backend nicht erreichbar.");
+      setError(e?.message || t("err.backendDown"));
     } finally { setBusy(false); }
   };
 
   const doImport = async () => {
-    if (!pw) { setError("Bitte das Passwort der Sicherung eingeben."); return; }
+    if (!pw) { setError(t("backup.needPassword")); return; }
     setBusy(true); setError("");
     try {
       const file = await window.electron?.openImport();
       if (file?.canceled) { setError(""); return; }
-      if (!file?.ok) { setError(file?.error || "Datei konnte nicht gelesen werden."); return; }
+      if (!file?.ok) { setError(file?.error || t("backup.readFailed")); return; }
       const res = await api.importAccounts(pw, file.content);
-      if (!res?.success) { setError(res?.message || "Import fehlgeschlagen."); return; }
-      showToast(`${res.count} Accounts übernommen.`);
+      if (!res?.success) { setError(tb(res?.message, t("err.generic"))); return; }
+      showToast(t("toast.imported", { n: res.count }));
       onImported();
       onClose();
     } catch (e) {
-      setError(e?.message || "Backend nicht erreichbar.");
+      setError(e?.message || t("err.backendDown"));
     } finally { setBusy(false); }
   };
 
@@ -763,28 +764,28 @@ function BackupManager({ onClose, onImported, showToast }) {
         padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
         <div style={{ fontSize: 9, letterSpacing: 3, color: "#ff4655", fontFamily: "'Space Mono', monospace", marginBottom: 8 }}>
-          SICHERUNG
+          {t("backup.label")}
         </div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e8e8", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginBottom: 14 }}>
-          Accounts sichern & umziehen
+          {t("backup.title")}
         </div>
 
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          <button onClick={() => { setTab("export"); setError(""); }} style={tabStyle(isExport)}>SICHERN</button>
-          <button onClick={() => { setTab("import"); setError(""); }} style={tabStyle(!isExport)}>EINLESEN</button>
+          <button onClick={() => { setTab("export"); setError(""); }} style={tabStyle(isExport)}>{t("backup.tabExport")}</button>
+          <button onClick={() => { setTab("import"); setError(""); }} style={tabStyle(!isExport)}>{t("backup.tabImport")}</button>
         </div>
 
         <div style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.5, marginBottom: 16 }}>
           {isExport
-            ? "Schreibt alle Accounts in eine Datei, die mit deinem Passwort geschützt ist. Nur damit kommst du auf einem neuen Rechner wieder an die Daten — bewahre beides getrennt auf."
-            : "Liest eine Sicherung ein. Achtung: die aktuellen Accounts werden dabei ersetzt. Eine Kopie des jetzigen Stands wird vorher automatisch abgelegt."}
+            ? t("backup.exportText")
+            : t("backup.importText")}
         </div>
 
         <input
           type="password"
           value={pw}
           onChange={e => setPw(e.target.value)}
-          placeholder={isExport ? "Passwort vergeben (min. 8 Zeichen)" : "Passwort der Sicherung"}
+          placeholder={isExport ? t("backup.phNew") : t("backup.phExisting")}
           autoFocus
           onKeyDown={e => { if (e.key === "Enter" && !isExport) doImport(); }}
           style={{ ...inputStyle, marginBottom: 10, fontSize: 13 }}
@@ -794,7 +795,7 @@ function BackupManager({ onClose, onImported, showToast }) {
             type="password"
             value={pw2}
             onChange={e => setPw2(e.target.value)}
-            placeholder="Passwort wiederholen"
+            placeholder={t("backup.phRepeat")}
             onKeyDown={e => { if (e.key === "Enter") doExport(); }}
             style={{ ...inputStyle, marginBottom: 10, fontSize: 13 }}
           />
@@ -802,7 +803,7 @@ function BackupManager({ onClose, onImported, showToast }) {
 
         {isExport && (
           <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 12, lineHeight: 1.5 }}>
-            ⚠ Dieses Passwort lässt sich nicht zurücksetzen. Ohne es ist die Datei wertlos.
+            {t("backup.warning")}
           </div>
         )}
 
@@ -813,9 +814,9 @@ function BackupManager({ onClose, onImported, showToast }) {
         )}
 
         <div style={{ display: "flex", gap: 10 }}>
-          <button onClick={onClose} style={cancelBtnStyle}>SCHLIESSEN</button>
+          <button onClick={onClose} style={cancelBtnStyle}>{t("common.close")}</button>
           <button onClick={isExport ? doExport : doImport} disabled={busy} style={saveBtnStyle}>
-            {busy ? "MOMENT..." : isExport ? "DATEI SPEICHERN" : "DATEI WÄHLEN"}
+            {busy ? t("common.working") : isExport ? t("backup.saveFile") : t("backup.pickFile")}
           </button>
         </div>
       </div>
@@ -840,47 +841,41 @@ function SecuritySection({ status, onChanged, showToast }) {
     setBusy(true); setError("");
     try {
       const res = await fn();
-      if (!res?.success) { setError(res?.message || "Hat nicht geklappt."); return; }
-      showToast(res.message || okMsg);
+      if (!res?.success) { setError(tb(res?.message, t("err.generic"))); return; }
+      showToast(tb(res.message, okMsg));
       reset();
       onChanged();
     } catch (e) {
-      setError(e?.message || "Backend nicht erreichbar.");
+      setError(e?.message || t("err.backendDown"));
     } finally { setBusy(false); }
   };
 
   const doEnable = () => {
-    if (pw.length < 8) { setError("Mindestens 8 Zeichen."); return; }
-    if (pw !== pw2) { setError("Die beiden Eingaben stimmen nicht überein."); return; }
-    run(() => api.enableMasterPassword(pw), "Master-Passwort aktiv.");
+    if (pw.length < 8) { setError(t("backup.short")); return; }
+    if (pw !== pw2) { setError(t("backup.mismatch")); return; }
+    run(() => api.enableMasterPassword(pw), t("common.confirm"));
   };
   const doDisable = () => {
-    if (!pw) { setError("Bitte das aktuelle Master-Passwort eingeben."); return; }
-    run(() => api.disableMasterPassword(pw), "Master-Passwort entfernt.");
+    if (!pw) { setError(t("sec.enterCurrent")); return; }
+    run(() => api.disableMasterPassword(pw), t("common.confirm"));
   };
   const doChange = () => {
-    if (pw2.length < 8) { setError("Das neue Passwort braucht mindestens 8 Zeichen."); return; }
-    run(() => api.changeMasterPassword(pw, pw2), "Master-Passwort geändert.");
+    if (pw2.length < 8) { setError(t("sec.newShort")); return; }
+    run(() => api.changeMasterPassword(pw, pw2), t("common.confirm"));
   };
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
-          MASTER-PASSWORT
+          {t("sec.label")}
         </span>
-        <InfoHint title="Master-Passwort" width={320}>
-          <b style={{ color: "#e8e8e8" }}>Aus (Standard):</b> Der Schlüssel für deine
-          Accounts liegt im Schlüsselbund von Windows. Bequem — die App startet ohne
-          Nachfrage. Nachteil: jedes Programm, das unter deinem Windows-Konto läuft,
-          kann Windows um diesen Schlüssel bitten.
+        <InfoHint title={t("hint.sec.title")} width={320}>
+          <b style={{ color: "#e8e8e8" }}>{t("hint.sec.offLabel")}</b> {t("hint.sec.offText")}
           <br /><br />
-          <b style={{ color: "#e8e8e8" }}>Ein:</b> Der Schlüssel entsteht erst aus deinem
-          eingetippten Passwort und wird nirgends gespeichert. Windows kann ihn nicht
-          herausgeben, weil es ihn nicht kennt. Dafür musst du ihn bei jedem Start eingeben.
+          <b style={{ color: "#e8e8e8" }}>{t("hint.sec.onLabel")}</b> {t("hint.sec.onText")}
           <br /><br />
-          <span style={{ color: "#f59e0b" }}>Vergisst du das Passwort, sind die Accounts
-          verloren</span> — es sei denn, du hast eine Sicherung.
+          <span style={{ color: "#f59e0b" }}>{t("hint.sec.warn")}</span>
         </InfoHint>
       </div>
 
@@ -893,23 +888,23 @@ function SecuritySection({ status, onChanged, showToast }) {
       }}>
         <div>
           <div style={{ fontSize: 13, color: "#e8e8e8", fontWeight: 600 }}>
-            {isOn ? "Eingeschaltet" : "Ausgeschaltet"}
+            {isOn ? t("sec.on") : t("sec.off")}
           </div>
           <div style={{ fontSize: 11, color: "#9ca3af", marginTop: 2 }}>
             {isOn
-              ? "Beim Start wird nach dem Passwort gefragt."
-              : "Der Schutz hängt am Gerät — kein Passwort nötig."}
+              ? t("sec.onText")
+              : t("sec.offText")}
           </div>
         </div>
         <div style={{ display: "flex", gap: 6 }}>
           {isOn ? (
             <>
-              <button onClick={() => { reset(); setMode("change"); }} style={smallBtnStyle}>ÄNDERN</button>
-              <button onClick={() => { reset(); setMode("disable"); }} style={smallBtnStyle}>AUSSCHALTEN</button>
+              <button onClick={() => { reset(); setMode("change"); }} style={smallBtnStyle}>{t("common.change")}</button>
+              <button onClick={() => { reset(); setMode("disable"); }} style={smallBtnStyle}>{t("common.disable")}</button>
             </>
           ) : (
             <button onClick={() => { reset(); setMode("enable"); }} style={{ ...smallBtnStyle, color: "#ff4655", borderColor: "rgba(255,70,85,0.4)" }}>
-              EINSCHALTEN
+              {t("common.enable")}
             </button>
           )}
         </div>
@@ -920,27 +915,27 @@ function SecuritySection({ status, onChanged, showToast }) {
           {mode === "enable" && (
             <>
               <input type="password" value={pw} onChange={e => setPw(e.target.value)} autoFocus
-                placeholder="Master-Passwort (min. 8 Zeichen)" style={{ ...inputStyle, marginBottom: 8 }} />
+                placeholder={t("sec.phNew")} style={{ ...inputStyle, marginBottom: 8 }} />
               <input type="password" value={pw2} onChange={e => setPw2(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") doEnable(); }}
-                placeholder="Wiederholen" style={{ ...inputStyle, marginBottom: 8 }} />
+                placeholder={t("sec.phRepeat")} style={{ ...inputStyle, marginBottom: 8 }} />
               <div style={{ fontSize: 11, color: "#f59e0b", marginBottom: 10, lineHeight: 1.5 }}>
-                ⚠ Es gibt keine Wiederherstellung. Lege dir vorher eine Sicherung an (Knopf ⤓).
+                {t("sec.warning")}
               </div>
             </>
           )}
           {mode === "disable" && (
             <input type="password" value={pw} onChange={e => setPw(e.target.value)} autoFocus
               onKeyDown={e => { if (e.key === "Enter") doDisable(); }}
-              placeholder="Aktuelles Master-Passwort" style={{ ...inputStyle, marginBottom: 10 }} />
+              placeholder={t("sec.phCurrent")} style={{ ...inputStyle, marginBottom: 10 }} />
           )}
           {mode === "change" && (
             <>
               <input type="password" value={pw} onChange={e => setPw(e.target.value)} autoFocus
-                placeholder="Bisheriges Passwort" style={{ ...inputStyle, marginBottom: 8 }} />
+                placeholder={t("sec.phOld")} style={{ ...inputStyle, marginBottom: 8 }} />
               <input type="password" value={pw2} onChange={e => setPw2(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") doChange(); }}
-                placeholder="Neues Passwort (min. 8 Zeichen)" style={{ ...inputStyle, marginBottom: 10 }} />
+                placeholder={t("sec.phNewChange")} style={{ ...inputStyle, marginBottom: 10 }} />
             </>
           )}
 
@@ -951,14 +946,54 @@ function SecuritySection({ status, onChanged, showToast }) {
           )}
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={reset} style={cancelBtnStyle}>ABBRECHEN</button>
+            <button onClick={reset} style={cancelBtnStyle}>{t("common.cancel")}</button>
             <button disabled={busy} style={saveBtnStyle}
               onClick={mode === "enable" ? doEnable : mode === "disable" ? doDisable : doChange}>
-              {busy ? "MOMENT..." : "BESTÄTIGEN"}
+              {busy ? t("common.working") : t("common.confirm")}
             </button>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Sprache ─────────────────────────────────────────
+// Englisch ist die Grundsprache. Ein Wechsel lädt das Fenster neu — die
+// Alternative wäre, die Sprache durch dutzende Komponenten zu reichen.
+function LanguageSection() {
+  const aktuell = getLang();
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
+          {t("lang.label")}
+        </span>
+        <InfoHint title={t("lang.hintTitle")} width={280}>
+          {t("lang.hint1")}
+          <br /><br />
+          {t("lang.hint2")}
+        </InfoHint>
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+        padding: "10px 12px", borderRadius: 8,
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      }}>
+        {SPRACHEN.map(sp => {
+          const aktiv = sp.code === aktuell;
+          return (
+            <button key={sp.code} onClick={() => !aktiv && setLang(sp.code)} style={{
+              ...smallBtnStyle,
+              color: aktiv ? "#ff4655" : "#d1d5db",
+              borderColor: aktiv ? "rgba(255,70,85,0.5)" : "rgba(255,255,255,0.14)",
+              background: aktiv ? "rgba(255,70,85,0.12)" : "rgba(255,255,255,0.05)",
+            }}>
+              {sp.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -986,25 +1021,21 @@ function ZoomSection({ showToast }) {
     setZoom(wert);
     try { localStorage.setItem(ZOOM_KEY, String(wert)); } catch { }
     await window.electron?.setZoom(wert);
-    showToast(`Oberflächengröße: ${Math.round(wert * 100)} %`);
+    showToast(t("zoom.toast", { p: Math.round(wert * 100) }));
   };
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
-          OBERFLÄCHENGRÖSSE
+          {t("zoom.label")}
         </span>
-        <InfoHint title="Oberflächengröße" width={300}>
-          Vergrössert oder verkleinert alles im Fenster — Schrift, Knöpfe,
-          Abstände.
+        <InfoHint title={t("zoom.hintTitle")} width={300}>
+          {t("zoom.hint1")}
           <br /><br />
-          Nützlich bei ungewöhnlichen Bildschirmauflösungen oder wenn Windows
-          auf 125 % oder 150 % skaliert. Dann wirkt die Oberfläche sonst
-          schnell zu gross.
+          {t("zoom.hint2")}
           <br /><br />
-          Die Einstellung bleibt gespeichert und gilt ab dem nächsten Start
-          automatisch.
+          {t("zoom.hint3")}
         </InfoHint>
       </div>
 
@@ -1054,29 +1085,29 @@ function UpdateSection({ showToast }) {
   const suchen = async () => {
     setZustand("suche"); setMeldung("");
     const r = await window.electron?.updatePruefen();
-    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || "Suche fehlgeschlagen."); return; }
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || t("upd.searchFailed")); return; }
     // Der genaue Zustand kommt gleich als Meldung vom Hauptprozess
   };
 
   const laden = async () => {
     setZustand("laedt"); setProzent(0);
     const r = await window.electron?.updateLaden();
-    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || "Herunterladen fehlgeschlagen."); }
+    if (!r?.ok) { setZustand("fehler"); setMeldung(r?.grund || t("upd.downloadFailed")); }
   };
 
   const installieren = async () => {
-    showToast("App startet neu...");
+    showToast(t("upd.restarting"));
     await window.electron?.updateInstallieren();
   };
 
   const text = {
-    unbekannt: "Noch nicht nachgesehen.",
-    suche: "Suche läuft...",
-    aktuell: "Du hast die neueste Fassung.",
-    verfuegbar: `Version ${version} ist verfügbar.`,
-    laedt: `Wird heruntergeladen... ${prozent} %`,
-    bereit: `Version ${version} ist fertig geladen.`,
-    fehler: meldung || "Es hat nicht geklappt.",
+    unbekannt: t("upd.unknown"),
+    suche: t("upd.searching"),
+    aktuell: t("upd.current"),
+    verfuegbar: t("upd.available", { v: version }),
+    laedt: t("upd.downloading", { p: prozent }),
+    bereit: t("upd.ready", { v: version }),
+    fehler: meldung || t("upd.failed"),
   }[zustand];
 
   const farbe = zustand === "fehler" ? "#ff4655"
@@ -1086,20 +1117,14 @@ function UpdateSection({ showToast }) {
     <div>
       <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
         <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
-          AKTUALISIERUNG
+          {t("upd.label")}
         </span>
-        <InfoHint title="Aktualisierung" width={320}>
-          Sucht auf GitHub nach einer neueren Fassung und lädt sie herunter.
-          Du musst nichts neu installieren — beim Neustart ersetzt sich die App
-          selbst.
+        <InfoHint title={t("upd.hintTitle")} width={320}>
+          {t("upd.hint1")}
           <br /><br />
-          Es passiert nichts ungefragt: Suchen, Herunterladen und Neustarten
-          bestätigst du jeweils selbst. Deine Accounts bleiben dabei unberührt,
-          sie liegen ausserhalb des Programmordners.
+          {t("upd.hint2")}
           <br /><br />
-          <span style={{ color: "#f59e0b" }}>Im Entwicklungsmodus nicht
-          verfügbar</span> — dort gibt es keine installierte App, die sich
-          ersetzen liesse.
+          <span style={{ color: "#f59e0b" }}>{t("upd.hint3")}</span>
         </InfoHint>
       </div>
 
@@ -1112,17 +1137,17 @@ function UpdateSection({ showToast }) {
           <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
             {(zustand === "verfuegbar") && (
               <button onClick={laden} style={{ ...smallBtnStyle, color: "#22c55e", borderColor: "rgba(34,197,94,0.4)" }}>
-                HERUNTERLADEN
+                {t("upd.download")}
               </button>
             )}
             {(zustand === "bereit") && (
               <button onClick={installieren} style={{ ...smallBtnStyle, color: "#22c55e", borderColor: "rgba(34,197,94,0.4)" }}>
-                NEU STARTEN
+                {t("upd.restart")}
               </button>
             )}
             {zustand !== "laedt" && zustand !== "bereit" && (
               <button onClick={suchen} disabled={zustand === "suche"} style={smallBtnStyle}>
-                {zustand === "suche" ? "SUCHT..." : "SUCHEN"}
+                {zustand === "suche" ? t("upd.checking") : t("upd.check")}
               </button>
             )}
           </div>
@@ -1154,15 +1179,21 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
         borderRadius: 12, padding: "28px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
         <div style={{ fontSize: 9, letterSpacing: 3, color: "#ff4655", fontFamily: "'Space Mono', monospace", marginBottom: 8 }}>
-          {setupMode ? "SCHRITT 2 VON 2 — GRUNDEINSTELLUNGEN" : "EINSTELLUNGEN"}
+          {setupMode ? t("set.setupLabel") : t("set.label")}
         </div>
         <div style={{ fontSize: 22, fontWeight: 700, color: "#e8e8e8", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginBottom: 6 }}>
-          {setupMode ? "Fast fertig" : "Einstellungen"}
+          {setupMode ? t("set.setupTitle") : t("set.title")}
         </div>
         <div style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.55, marginBottom: 20 }}>
           {setupMode
-            ? "Diese Einstellungen kannst du jederzeit über das Zahnrad ändern. Die Pfeile neben den Überschriften erklären, was eine Einstellung bewirkt — zum Festhalten anklicken."
-            : "Die Pfeile ➜ erklären jede Einstellung. Überfahren zeigt die Erklärung, Anklicken hält sie fest."}
+            ? t("set.setupText")
+            : t("set.text")}
+        </div>
+
+        {/* Sprache — bewusst zuoberst, damit sie auch findet, wer die
+            eingestellte Sprache nicht versteht */}
+        <div style={{ marginBottom: 22 }}>
+          <LanguageSection />
         </div>
 
         {/* Aktualisierung */}
@@ -1186,18 +1217,14 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
         <div style={{ marginBottom: 22 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
             <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
-              SICHERUNG
+              {t("backup.label")}
             </span>
-            <InfoHint title="Sicherung" width={320}>
-              Schreibt alle Accounts in eine Datei, die mit einem eigenen Passwort
-              geschützt ist. Nötig für zwei Fälle:
+            <InfoHint title={t("hint.backup.title")} width={320}>
+              {t("hint.backup.intro")}
               <br /><br />
-              <b style={{ color: "#e8e8e8" }}>Umzug:</b> Die normale Ablage ist an diesen
-              Rechner gebunden. Auf einem neuen PC kommst du nur über diese Datei wieder
-              an deine Accounts.
+              <b style={{ color: "#e8e8e8" }}>{t("hint.backup.moveLabel")}</b> {t("hint.backup.moveText")}
               <br /><br />
-              <b style={{ color: "#e8e8e8" }}>Notfall:</b> Falls du das Master-Passwort
-              vergisst oder Windows neu aufsetzt.
+              <b style={{ color: "#e8e8e8" }}>{t("hint.backup.emergencyLabel")}</b> {t("hint.backup.emergencyText")}
             </InfoHint>
           </div>
           <div style={{
@@ -1206,10 +1233,9 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
             background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
           }}>
             <div style={{ fontSize: 11, color: "#9ca3af", lineHeight: 1.5, paddingRight: 10 }}>
-              Accounts in eine passwortgeschützte Datei schreiben oder eine
-              vorhandene Sicherung einlesen.
+              {t("backup.settingsText")}
             </div>
-            <button onClick={onOpenBackup} style={smallBtnStyle}>ÖFFNEN</button>
+            <button onClick={onOpenBackup} style={smallBtnStyle}>{t("common.open")}</button>
           </div>
         </div>
 
@@ -1217,15 +1243,12 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
             <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
-              HENRIK API-KEY
+              {t("hint.key.title").toUpperCase()}
             </span>
-            <InfoHint title="API-Key" width={300}>
-              Dein persönlicher Zugang zur Henrik-API, über die Rang, RR und
-              Match-Verlauf geladen werden. Ohne gültigen Key bleiben diese
-              Anzeigen leer — die gespeicherten Zugangsdaten funktionieren
-              trotzdem weiter.
+            <InfoHint title={t("hint.key.title")} width={300}>
+              {t("hint.key.text1")}
               <br /><br />
-              Der Key wird nur lokal abgelegt und beim Speichern einmal geprüft.
+              {t("hint.key.text2")}
             </InfoHint>
           </div>
           <div style={{
@@ -1233,15 +1256,15 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
             padding: "10px 12px", borderRadius: 8,
             background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
           }}>
-            <div style={{ fontSize: 11, color: "#9ca3af" }}>Hinterlegt und geprüft.</div>
-            <button onClick={onOpenApiKey} style={smallBtnStyle}>WECHSELN</button>
+            <div style={{ fontSize: 11, color: "#9ca3af" }}>{t("key.stored")}</div>
+            <button onClick={onOpenApiKey} style={smallBtnStyle}>{t("common.change")}</button>
           </div>
         </div>
 
         <div style={{ display: "flex", gap: 10 }}>
           {setupMode ? (
             <button onClick={onFinish} style={{ ...saveBtnStyle, width: "100%" }}>
-              LOS GEHT'S
+              {t("set.finish")}
             </button>
           ) : (
             <button onClick={onClose} style={{ ...cancelBtnStyle, width: "100%" }}>
@@ -1262,14 +1285,14 @@ function UnlockScreen({ onUnlocked }) {
   const [error, setError] = useState("");
 
   const submit = async () => {
-    if (!pw) { setError("Bitte das Master-Passwort eingeben."); return; }
+    if (!pw) { setError(t("unlock.enter")); return; }
     setBusy(true); setError("");
     try {
       const res = await api.unlockWithPassword(pw);
-      if (!res?.success) { setError(res?.message || "Falsches Passwort."); setPw(""); return; }
+      if (!res?.success) { setError(tb(res?.message, t("err.generic"))); setPw(""); return; }
       onUnlocked();
     } catch (e) {
-      setError(e?.message || "Backend nicht erreichbar.");
+      setError(e?.message || t("err.backendDown"));
     } finally { setBusy(false); }
   };
 
@@ -1283,20 +1306,19 @@ function UnlockScreen({ onUnlocked }) {
         borderRadius: 12, padding: "30px 28px 24px", boxShadow: "0 8px 40px rgba(0,0,0,0.6)",
       }}>
         <div style={{ fontSize: 9, letterSpacing: 3, color: "#ff4655", fontFamily: "'Space Mono', monospace", marginBottom: 8 }}>
-          GESPERRT
+          {t("unlock.label")}
         </div>
         <div style={{ fontSize: 24, fontWeight: 700, color: "#e8e8e8", fontFamily: "'Bebas Neue', sans-serif", letterSpacing: 1, marginBottom: 12 }}>
-          Master-Passwort
+          {t("unlock.title")}
         </div>
         <div style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.55, marginBottom: 16 }}>
-          Deine Accounts sind mit einem Master-Passwort verschlüsselt. Ohne dieses
-          Passwort kann sie niemand öffnen — auch die App selbst nicht.
+          {t("unlock.text")}
         </div>
 
         <input type="password" value={pw} autoFocus
           onChange={e => setPw(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter") submit(); }}
-          placeholder="Master-Passwort" style={{ ...inputStyle, marginBottom: 10 }} />
+          placeholder={t("unlock.placeholder")} style={{ ...inputStyle, marginBottom: 10 }} />
 
         {error && (
           <div style={{ fontSize: 11, color: "#ff4655", marginBottom: 10, fontFamily: "'Space Mono', monospace" }}>
@@ -1305,7 +1327,7 @@ function UnlockScreen({ onUnlocked }) {
         )}
 
         <button onClick={submit} disabled={busy} style={{ ...saveBtnStyle, width: "100%" }}>
-          {busy ? "PRÜFT..." : "ENTSPERREN"}
+          {busy ? t("unlock.checking") : t("unlock.button")}
         </button>
       </div>
     </div>
@@ -1346,7 +1368,7 @@ export default function App() {
         if (updated) setSelected(updated);
       }
     } catch (err) {
-      showToast("Backend nicht erreichbar", "error");
+      showToast(t("toast.backendDown"), "error");
     }
   }, [selected]);
 
@@ -1404,10 +1426,10 @@ export default function App() {
     try {
       const res = await api.syncAccount(index);
       if (res.success) {
-        showToast("Synchronisierung erfolgreich!");
+        showToast(t("toast.syncOk"));
         await loadAccounts();
       } else {
-        showToast(res.message || "Sync fehlgeschlagen", "error");
+        showToast(tb(res.message, t("toast.syncFailed")), "error");
       }
     } catch {
       showToast("Sync fehlgeschlagen", "error");
@@ -1426,14 +1448,14 @@ export default function App() {
   // Account erstellen
   const handleCreate = async (form) => {
     await api.createAccount(form);
-    showToast("Account erstellt!");
+    showToast(t("toast.accountCreated"));
     await loadAccounts();
   };
 
   // Account bearbeiten
   const handleEdit = async (form) => {
     await api.updateAccount(selected.index, form);
-    showToast("Account aktualisiert!");
+    showToast(t("toast.accountUpdated"));
     await loadAccounts();
   };
 
@@ -1442,14 +1464,14 @@ export default function App() {
     await api.deleteAccount(selected.index);
     setSelected(null);
     setModal(null);
-    showToast("Account gelöscht", "info");
+    showToast(t("toast.accountDeleted"), "info");
     await loadAccounts();
   };
 
   // Als Main markieren
   const handleSetMain = async (index) => {
     await api.setMainAccount(index);
-    showToast("Main Account gesetzt!");
+    showToast(t("toast.mainSet"));
     await loadAccounts();
   };
 
@@ -1458,9 +1480,9 @@ export default function App() {
     if (window.electron) {
       const res = await window.electron.launchRiotClient();
       // Sagt jetzt, warum es nicht geklappt hat, statt stumm nichts zu tun
-      if (res && !res.ok) showToast(res.message || "Riot Client konnte nicht gestartet werden.", "error");
+      if (res && !res.ok) showToast(res.message || t("err.generic"), "error");
     } else {
-      showToast("Nur in der Desktop-App verfügbar", "info");
+      showToast(t("toast.desktopOnly"), "info");
     }
   };
 
@@ -1500,7 +1522,7 @@ export default function App() {
             setApiKeyReady(true);
             await refreshSecurity();
             loadAccounts();
-            showToast("API-Key gespeichert!");
+            showToast(t("toast.keySaved"));
             // Schritt 2 der Ersteinrichtung: Grundeinstellungen
             setSetupStep2(true);
           }}
@@ -1637,7 +1659,7 @@ export default function App() {
           }}>
             ↻ ALLE SYNC
           </button>
-          <button onClick={() => setShowBackup(true)} title="Accounts sichern / einlesen" style={{
+          <button onClick={() => setShowBackup(true)} title={t("nav.backup")} style={{
             padding: "6px 12px",
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 4, color: "#6b7280", fontSize: 13, marginRight: 6,
@@ -1645,7 +1667,7 @@ export default function App() {
             ⤓
           </button>
 
-          <button onClick={() => { refreshSecurity(); setShowSettings(true); }} title="Einstellungen" style={{
+          <button onClick={() => { refreshSecurity(); setShowSettings(true); }} title={t("nav.settings")} style={{
             padding: "6px 12px",
             background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
             borderRadius: 4, color: "#6b7280", fontSize: 13,
@@ -1666,7 +1688,7 @@ export default function App() {
         }}>
           <div style={{ padding: "12px 12px 6px" }}>
             <span style={{ fontSize: 9, letterSpacing: 3, color: "#374151", fontFamily: "'Space Mono', monospace" }}>
-              ACCOUNTS
+              {t("nav.accounts")}
             </span>
           </div>
 
@@ -1719,13 +1741,13 @@ export default function App() {
                             background: "rgba(255,70,85,0.2)", border: "1px solid rgba(255,70,85,0.4)",
                             borderRadius: 2, color: "#ff4655", letterSpacing: 1,
                             fontFamily: "'Space Mono', monospace", flexShrink: 0
-                          }}>MAIN</span>
+                          }}>{t("nav.main")}</span>
                         )}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         {d?.rankImageUrl && <img src={d.rankImageUrl} alt="" style={{ width: 14, height: 14 }} />}
                         <span style={{ fontSize: 11, color: rankColor(d?.rankName), fontWeight: 600 }}>
-                          {d?.rankName || "—"}
+                          {d?.rankName ? tb(d.rankName) : "—"}
                         </span>
                         <span style={{ fontSize: 10, color: "#374151" }}>#{acc.riotTag}</span>
                       </div>
@@ -1822,13 +1844,13 @@ export default function App() {
                           background: "rgba(255,70,85,0.15)", border: "1px solid rgba(255,70,85,0.5)",
                           borderRadius: 2, color: "#ff4655", letterSpacing: 2,
                           fontFamily: "'Space Mono', monospace"
-                        }}>MAIN</span>
+                        }}>{t("nav.main")}</span>
                       )}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                       {data?.rankImageUrl && <img src={data.rankImageUrl} alt="" style={{ width: 22, height: 22 }} />}
                       <span style={{ fontSize: 14, fontWeight: 600, color: rc }}>
-                        {data?.rankName || "Unranked"}
+                        {tb(data?.rankName, "Unranked")}
                       </span>
                       {data?.rr != null && (
                         <>
@@ -1852,10 +1874,10 @@ export default function App() {
                   {/* Actions */}
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
                     {[
-                      { label: "LOGIN", color: "#ff4655", bg: "rgba(255,70,85,0.15)", border: "rgba(255,70,85,0.4)", action: handleLogin },
+                      { label: t("account.login"), color: "#ff4655", bg: "rgba(255,70,85,0.15)", border: "rgba(255,70,85,0.4)", action: handleLogin },
                       { label: syncing[selected.index] ? "SYNC..." : "SYNC", color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(selected.index) },
-                      { label: "EDIT", color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => setModal("edit") },
-                      !selected.isMain && { label: "★ MAIN", color: "#ffd700", bg: "rgba(255,215,0,0.07)", border: "rgba(255,215,0,0.25)", action: () => handleSetMain(selected.index) },
+                      { label: t("nav.edit"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => setModal("edit") },
+                      !selected.isMain && { label: t("nav.setMain"), color: "#ffd700", bg: "rgba(255,215,0,0.07)", border: "rgba(255,215,0,0.25)", action: () => handleSetMain(selected.index) },
                       { label: "✕", color: "#ef4444", bg: "rgba(239,68,68,0.07)", border: "rgba(239,68,68,0.25)", action: () => setModal("delete") },
                     ].filter(Boolean).map(btn => (
                       <button key={btn.label} onClick={btn.action} disabled={syncing[selected.index] && btn.label.includes("SYNC")} style={{
@@ -1877,19 +1899,21 @@ export default function App() {
                 display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)",
                 padding: "0 28px", background: "rgba(8,8,13,0.5)"
               }}>
-                {["overview", "credentials"].map(t => (
+          {/* Schleifenvariable heisst bewusst NICHT t — das wuerde die
+              Uebersetzungsfunktion t() innerhalb der Schleife verdecken. */}
+                {["overview", "credentials"].map(reiter => (
                   <button
-                    key={t} className={`tab-btn ${tab === t ? "active" : ""}`}
-                    onClick={() => setTab(t)}
+                    key={reiter} className={`tab-btn ${tab === reiter ? "active" : ""}`}
+                    onClick={() => setTab(reiter)}
                     style={{
                       position: "relative", padding: "10px 18px",
                       background: "none", border: "none",
                       fontSize: 11, fontWeight: 700, letterSpacing: 2,
                       textTransform: "uppercase",
-                      color: tab === t ? "#ff4655" : "#4b5563",
+                      color: tab === reiter ? "#ff4655" : "#4b5563",
                       transition: "color 0.15s ease",
                     }}
-                  >{t}</button>
+                  >{reiter === "overview" ? t("nav.overview") : t("nav.credentials")}</button>
                 ))}
               </div>
 
@@ -1915,7 +1939,7 @@ export default function App() {
             }}>
               <div style={{ fontSize: 40 }}>⬅</div>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2 }}>
-                ACCOUNT AUSWÄHLEN
+                {t("nav.selectAccount")}
               </div>
               {/* flex:"0 0 auto" hebt das flex:1 aus saveBtnStyle auf. In den
                   Dialogen steht der Knopf in einer Zeile (dort teilt flex:1 die
@@ -1925,7 +1949,7 @@ export default function App() {
                 onClick={() => setModal("add")}
                 style={{ ...saveBtnStyle, flex: "0 0 auto", padding: "11px 22px" }}
               >
-                + ERSTEN ACCOUNT ANLEGEN
+                {t("nav.firstAccount")}
               </button>
             </div>
           )}
@@ -1955,7 +1979,7 @@ export default function App() {
         <ApiKeyManager
           mode="settings"
           onClose={() => setShowKeySettings(false)}
-          onSaved={() => { setShowKeySettings(false); showToast("API-Key aktualisiert!"); }}
+          onSaved={() => { setShowKeySettings(false); showToast(t("toast.keyUpdated")); }}
         />
       )}
 

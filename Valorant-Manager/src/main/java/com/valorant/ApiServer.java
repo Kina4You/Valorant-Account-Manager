@@ -76,61 +76,58 @@ public class ApiServer {
     @PostMapping("/security/unlock")
     public ResponseEntity<SimpleResult> unlock(@RequestBody PasswordRequest req) {
         if (req.password() == null || req.password().isEmpty()) {
-            return ResponseEntity.ok(new SimpleResult(false, "Bitte das Master-Passwort eingeben."));
+            return ResponseEntity.ok(new SimpleResult(false, "unlock_empty"));
         }
         if (!storage.unlock(req.password())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Falsches Master-Passwort."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_wrong"));
         }
         accounts = storage.loadAccounts();
         System.out.println("[Server] Entsperrt, " + accounts.size() + " Accounts geladen.");
-        return ResponseEntity.ok(new SimpleResult(true, accounts.size() + " Accounts geladen."));
+        return ResponseEntity.ok(new SimpleResult(true, "unlock_ok"));
     }
 
     @PostMapping("/security/enable-password")
     public ResponseEntity<SimpleResult> enablePassword(@RequestBody PasswordRequest req) {
         if (req.password() == null || req.password().length() < 8) {
-            return ResponseEntity.ok(new SimpleResult(false,
-                "Das Master-Passwort braucht mindestens 8 Zeichen."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_too_short"));
         }
         if ("passwort".equals(storage.protectionMode())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Ist bereits eingeschaltet."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_already_on"));
         }
         if (!storage.enablePassword(req.password(), accounts)) {
-            return ResponseEntity.ok(new SimpleResult(false, "Nicht möglich — Daten sind gesperrt."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_locked"));
         }
-        return ResponseEntity.ok(new SimpleResult(true,
-            "Master-Passwort aktiv. Ab dem nächsten Start wird danach gefragt."));
+        return ResponseEntity.ok(new SimpleResult(true, "pw_enabled"));
     }
 
     @PostMapping("/security/disable-password")
     public ResponseEntity<SimpleResult> disablePassword(@RequestBody PasswordRequest req) {
         if (!"passwort".equals(storage.protectionMode())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Ist gar nicht eingeschaltet."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_not_on"));
         }
         // Zur Sicherheit noch einmal das aktuelle Passwort verlangen
         if (req.password() == null || !storage.unlock(req.password())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Falsches Master-Passwort."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_wrong"));
         }
         if (!storage.disablePassword(accounts)) {
-            return ResponseEntity.ok(new SimpleResult(false, "Nicht möglich."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_locked"));
         }
-        return ResponseEntity.ok(new SimpleResult(true,
-            "Master-Passwort entfernt. Der Schutz hängt wieder am Gerät."));
+        return ResponseEntity.ok(new SimpleResult(true, "pw_disabled"));
     }
 
     @PostMapping("/security/change-password")
     public ResponseEntity<SimpleResult> changePassword(@RequestBody ChangePasswordRequest req) {
         if (!"passwort".equals(storage.protectionMode())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Es ist kein Master-Passwort gesetzt."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_not_on"));
         }
         if (req.newPassword() == null || req.newPassword().length() < 8) {
-            return ResponseEntity.ok(new SimpleResult(false, "Das neue Passwort braucht mindestens 8 Zeichen."));
+            return ResponseEntity.ok(new SimpleResult(false, "pw_too_short"));
         }
         if (req.oldPassword() == null || !storage.unlock(req.oldPassword())) {
-            return ResponseEntity.ok(new SimpleResult(false, "Das bisherige Passwort stimmt nicht."));
+            return ResponseEntity.ok(new SimpleResult(false, "old_pw_wrong"));
         }
         storage.enablePassword(req.newPassword(), accounts);
-        return ResponseEntity.ok(new SimpleResult(true, "Master-Passwort geändert."));
+        return ResponseEntity.ok(new SimpleResult(true, "pw_changed"));
     }
 
     // ── Export / Import ───────────────────────────────────────────────────
@@ -141,43 +138,39 @@ public class ApiServer {
     @PostMapping("/export")
     public ResponseEntity<ExportResponse> exportAccounts(@RequestBody PasswordRequest req) {
         if (req.password() == null || req.password().length() < 8) {
-            return ResponseEntity.ok(new ExportResponse(false,
-                "Bitte ein Passwort mit mindestens 8 Zeichen wählen.", null, 0));
+            return ResponseEntity.ok(new ExportResponse(false, "export_pw_short", null, 0));
         }
         try {
             String json = storage.toJson(accounts);
             String blob = CryptoManager.encryptWithPassword(json, req.password());
             System.out.println("[Export] " + accounts.size() + " Accounts exportiert.");
-            return ResponseEntity.ok(new ExportResponse(true,
-                accounts.size() + " Accounts exportiert.", blob, accounts.size()));
+            return ResponseEntity.ok(new ExportResponse(true, "export_ok", blob, accounts.size()));
         } catch (Exception e) {
             System.out.println("[Export] Fehler: " + e.getMessage());
-            return ResponseEntity.ok(new ExportResponse(false, "Export fehlgeschlagen.", null, 0));
+            return ResponseEntity.ok(new ExportResponse(false, "export_failed", null, 0));
         }
     }
 
     @PostMapping("/import")
     public ResponseEntity<ImportResponse> importAccounts(@RequestBody ImportRequest req) {
         if (req.password() == null || req.password().isBlank()) {
-            return ResponseEntity.ok(new ImportResponse(false, "Bitte das Passwort eingeben.", 0, null));
+            return ResponseEntity.ok(new ImportResponse(false, "import_pw_empty", 0, null));
         }
         if (req.content() == null || req.content().isBlank()) {
-            return ResponseEntity.ok(new ImportResponse(false, "Die Datei ist leer.", 0, null));
+            return ResponseEntity.ok(new ImportResponse(false, "import_empty_file", 0, null));
         }
         List<Account> imported;
         try {
             String json = CryptoManager.decryptWithPassword(req.content(), req.password());
             imported = storage.fromJson(json);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.ok(new ImportResponse(false, e.getMessage(), 0, null));
+            return ResponseEntity.ok(new ImportResponse(false, "import_not_our_file", 0, null));
         } catch (Exception e) {
             // GCM schlägt bei falschem Passwort fehl — das ist der häufigste Fall
-            return ResponseEntity.ok(new ImportResponse(false,
-                "Falsches Passwort oder beschädigte Datei.", 0, null));
+            return ResponseEntity.ok(new ImportResponse(false, "import_wrong_pw", 0, null));
         }
         if (imported.isEmpty()) {
-            return ResponseEntity.ok(new ImportResponse(false,
-                "Die Datei enthält keine Accounts — es wurde nichts geändert.", 0, null));
+            return ResponseEntity.ok(new ImportResponse(false, "import_no_accounts", 0, null));
         }
 
         // Erst sichern, dann ersetzen. Ohne Sicherung wäre ein versehentlicher
@@ -187,8 +180,7 @@ public class ApiServer {
         accounts.addAll(imported);
         storage.saveAccounts(accounts);
         System.out.println("[Import] " + imported.size() + " Accounts übernommen.");
-        return ResponseEntity.ok(new ImportResponse(true,
-            imported.size() + " Accounts übernommen.", imported.size(), backup));
+        return ResponseEntity.ok(new ImportResponse(true, "import_ok", imported.size(), backup));
     }
 
     @GetMapping("/accounts")
@@ -262,14 +254,14 @@ public class ApiServer {
                 }
 
                 storage.saveAccounts(accounts);
-                return ResponseEntity.ok(new SyncResponse(true, "Erfolgreich", info));
+                return ResponseEntity.ok(new SyncResponse(true, "sync_ok", info));
             }
         } catch (TimeoutException e) {
-            return ResponseEntity.ok(new SyncResponse(false, "Timeout", null));
+            return ResponseEntity.ok(new SyncResponse(false, "sync_timeout", null));
         } catch (Exception e) {
             System.out.println("[Sync] Fehler: " + e.getMessage());
         }
-        return ResponseEntity.ok(new SyncResponse(false, "Sync fehlgeschlagen", null));
+        return ResponseEntity.ok(new SyncResponse(false, "sync_failed", null));
     }
 
     @PostMapping("/accounts/{index}/main")

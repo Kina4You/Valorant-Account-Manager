@@ -41,7 +41,10 @@ public class ValorantAPI {
         int assists
     ) {}
 
-    /** Ergebnis einer Key-Prüfung: gültig ja/nein plus Klartext-Begründung fürs Frontend. */
+    /**
+     * Ergebnis einer Key-Prüfung. {@code message} ist eine KENNUNG, kein fertiger
+     * Satz — die Oberfläche übersetzt sie in die eingestellte Sprache.
+     */
     public record KeyCheck(boolean valid, String message) {}
 
     /**
@@ -54,14 +57,14 @@ public class ValorantAPI {
      */
     public static KeyCheck validateKey(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
-            return new KeyCheck(false, "Kein Key eingegeben.");
+            return new KeyCheck(false, "key_empty");
         }
         String key = apiKey.trim();
         if (!key.startsWith("HDEV-")) {
-            return new KeyCheck(false, "Ein Henrik-Key beginnt mit \"HDEV-\". Bitte den ganzen Key einfügen.");
+            return new KeyCheck(false, "key_prefix");
         }
         if (key.length() < 20) {
-            return new KeyCheck(false, "Der Key sieht unvollständig aus.");
+            return new KeyCheck(false, "key_short");
         }
 
         try {
@@ -79,16 +82,16 @@ public class ValorantAPI {
 
             int code = res.statusCode();
             if (code == 401 || code == 403) {
-                return new KeyCheck(false, "Henrik hat den Key abgelehnt. Bitte prüfen.");
+                return new KeyCheck(false, "key_rejected");
             }
             if (code == 429) {
-                return new KeyCheck(false, "Zu viele Anfragen an Henrik. Bitte kurz warten.");
+                return new KeyCheck(false, "key_ratelimited");
             }
-            return new KeyCheck(true, "Key geprüft und gespeichert.");
+            return new KeyCheck(true, "key_ok");
 
         } catch (Exception e) {
             System.out.println("[ValorantAPI] Key-Prüfung nicht möglich: " + e.getMessage());
-            return new KeyCheck(true, "Key gespeichert (ohne Online-Prüfung — keine Verbindung zu Henrik).");
+            return new KeyCheck(true, "key_ok_offline");
         }
     }
 
@@ -96,7 +99,7 @@ public class ValorantAPI {
         String apiKey = Config.getApiKey();
         if (apiKey == null || apiKey.isBlank()) {
             System.out.println("[ValorantAPI] Kein API-Key gesetzt.");
-            return new FullAccountInfo("Kein API-Key", null, 0, null,
+            return new FullAccountInfo("err_no_key", null, 0, null,
                 new ArrayList<>(), 0, new ArrayList<>(), "", new ArrayList<>(),
                 0, 0, 0, 0);
         }
@@ -224,7 +227,7 @@ public class ValorantAPI {
                     Collections.reverse(matchHistory); // Älteste zuerst
                 }
             } else if (mmrHistRes.statusCode() == 404) {
-                rankName = "Spieler nicht gefunden";
+                rankName = "err_player_not_found";
             }
 
             // ── Ergebnisse aus REQUEST 3: /v3/matches — Top Agents + KDA ─────
@@ -326,7 +329,7 @@ public class ValorantAPI {
 
         } catch (Exception e) {
             System.out.println("[ValorantAPI] Fehler: " + e.getMessage());
-            return new FullAccountInfo("Verbindungsfehler", null, 0, null, new ArrayList<>(), 0, new ArrayList<>(), "", new ArrayList<>(),
+            return new FullAccountInfo("err_connection", null, 0, null, new ArrayList<>(), 0, new ArrayList<>(), "", new ArrayList<>(),
                 0, 0, 0, 0);
         }
     }

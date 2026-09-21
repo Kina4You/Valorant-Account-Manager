@@ -3,6 +3,8 @@
  * React-Komponenten importieren nur diese Datei.
  */
 
+import { t } from "./i18n";
+
 const BASE = "/api";
 
 /**
@@ -14,17 +16,17 @@ const BASE = "/api";
  */
 async function req(path, options = {}) {
   if (typeof window === "undefined" || !window.electron?.apiRequest) {
-    throw new Error("Nur in der Desktop-App verfügbar.");
+    throw new Error(t("err.desktopOnly"));
   }
 
   const body = options.body ? JSON.parse(options.body) : undefined;
   const res = await window.electron.apiRequest(options.method || "GET", `${BASE}${path}`, body);
 
   if (!res || res.status === 0) {
-    throw new Error(res?.error || "Backend nicht erreichbar.");
+    throw new Error(res?.error || t("err.backendDown"));
   }
   if (res.status === 401 || res.status === 403) {
-    throw new Error("Zugriff verweigert. Bitte die App neu starten.");
+    throw new Error(t("err.denied"));
   }
   if (res.status < 200 || res.status >= 300) {
     // Status mitgeben, damit die Oberfläche z. B. 423 (gesperrt) erkennen kann

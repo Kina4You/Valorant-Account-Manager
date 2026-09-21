@@ -137,6 +137,23 @@ Endpunkte: `/api/security/status`, `/unlock`, `/enable-password`,
 Nach aussen gehen nur noch: die Henrik-API beim Sync (Riot-Name, Tag,
 API-Key — keine Passwörter) und die Rang-/Agentenbilder von Riots CDN.
 
+## Sprachen
+
+`frontend/src/i18n.js` — **Englisch ist die Grundsprache**, Deutsch die
+Alternative. Auswahl liegt im localStorage unter `vm-lang`; ein Wechsel lädt
+das Fenster neu (statt die Sprache durch dutzende Komponenten zu reichen).
+
+Regeln für neue Texte:
+- Nie feste Zeichenketten in der Oberfläche — immer `t("bereich.schluessel")`.
+- Beide Wörterbücher gleich halten. Ein fehlender Schlüssel fällt still auf
+  Englisch zurück, ein ganz fehlender zeigt den Schlüssel selbst.
+- **Das Backend liefert KENNUNGEN, keine fertigen Sätze** (`pw_wrong`,
+  `import_ok`, …). In der Oberfläche mit `tb(code)` übersetzen. Sonst steht
+  bei englischer Oberfläche plötzlich ein deutscher Satz.
+- Platzhalter: `t("upd.available", { v: "2.1.1" })` ersetzt `{v}`.
+- **Keine Variable `t` nennen.** Sie würde die Übersetzungsfunktion verdecken;
+  genau das ist bei der Reiter-Schleife und im Toast schon passiert.
+
 ## Oberfläche: Einstellungen & Ersteinrichtung
 
 Zahnrad öffnet `BasicSettings` (Master-Passwort, Sicherung, API-Key). Nach der
