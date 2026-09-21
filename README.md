@@ -75,10 +75,16 @@ cd Valorant-Manager && mvn clean package
 cp target/valorant-manager-api-2.0.0.jar ../valorant-manager-electron/backend/
 ```
 
-**Warum die Laufzeit nicht im Repo liegt:** `runtime/lib/modules` ist allein
-112 MB und damit über GitHubs Grenze von 100 MB pro Datei. Ohne sie läuft die
-App auf dem Entwicklungsrechner weiter (dort greift das installierte Java) —
-für das Windows-Paket wird sie gebraucht.
+**Warum die Laufzeit nicht im Repo liegt:** Sie ist 155 MB unveränderliches
+Fremdmaterial, das sich mit den vier Befehlen oben jederzeit wiederherstellen
+lässt. Die grösste Einzeldatei darin (`lib/modules`) liegt bei 97 MiB — nur
+3 MiB unter GitHubs harter Grenze von 100 MiB pro Datei. Schon die nächste
+Java-Version könnte darüber liegen und jeden Push blockieren. Dazu kommt:
+Git speichert Binärdateien nicht platzsparend, jede Aktualisierung der
+Laufzeit würde dauerhaft weitere ~100 MB in der Historie hinterlassen.
+
+Ohne sie läuft die App auf dem Entwicklungsrechner weiter (dort greift das
+installierte Java) — für das Windows-Paket wird sie gebraucht.
 
 ---
 

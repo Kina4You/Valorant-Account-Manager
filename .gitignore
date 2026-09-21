@@ -18,9 +18,12 @@ valorant-manager-electron/frontend/build/
 valorant-manager-electron/dist/
 
 # ── Mitgelieferte Java-Laufzeit (~155 MB) ──
-# Absichtlich draussen: lib/modules allein ist 112 MB und damit über
-# GitHubs Grenze von 100 MB pro Datei. Wie man sie neu beschafft, steht
-# in CLAUDE.md unter "Java-Laufzeit beschaffen".
+# Absichtlich draussen: unveränderliches Fremdmaterial, das sich mit vier
+# Befehlen wiederherstellen lässt. Grösste Einzeldatei (lib/modules) ist
+# 97 MiB — nur 3 MiB unter GitHubs harter Grenze von 100 MiB, die nächste
+# Java-Version könnte darüber liegen. Ausserdem würde jede Aktualisierung
+# dauerhaft ~100 MB in der Git-Historie hinterlassen.
+# Wiederherstellen: siehe CLAUDE.md, "Java-Laufzeit beschaffen".
 valorant-manager-electron/runtime/
 
 # ── Geheimnisse und persönliche Daten ──

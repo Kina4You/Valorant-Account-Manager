@@ -187,9 +187,10 @@ weitergeben.
 
 ## Java-Laufzeit beschaffen
 
-`valorant-manager-electron/runtime/` ist NICHT im Repo: `lib/modules` allein
-ist 112 MB und damit über GitHubs Grenze von 100 MB pro Datei. Nach einem
-frischen Klon so wiederherstellen:
+`valorant-manager-electron/runtime/` ist NICHT im Repo: 155 MB Fremdmaterial,
+das sich in vier Befehlen wiederherstellen lässt. `lib/modules` allein ist
+97 MiB — knapp unter GitHubs harter Grenze von 100 MiB, die nächste
+Java-Version könnte darüber liegen. Nach einem frischen Klon so beschaffen:
 
 ```
 curl -L -o /tmp/jre.zip "https://api.adoptium.net/v3/binary/latest/26/ga/windows/x64/jre/hotspot/normal/eclipse"
