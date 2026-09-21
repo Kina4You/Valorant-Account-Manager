@@ -1,0 +1,46 @@
+# ─────────────────────────────────────────────────────────────
+#  Was NICHT ins Repo gehört
+#  Faustregel: alles, was sich aus dem Quellcode wieder herstellen
+#  lässt, und alles, was ein Geheimnis enthält.
+# ─────────────────────────────────────────────────────────────
+
+# ── Abhängigkeiten (zusammen ~920 MB, kommen aus package.json) ──
+node_modules/
+
+# ── Bauergebnisse ──
+# Java-Build
+Valorant-Manager/target/
+# Die .jar-Kopie im Electron-Ordner — wird aus target/ kopiert
+valorant-manager-electron/backend/*.jar
+# React-Build
+valorant-manager-electron/frontend/build/
+# Fertige Windows-App und Installer (~680 MB)
+valorant-manager-electron/dist/
+
+# ── Mitgelieferte Java-Laufzeit (~155 MB) ──
+# Absichtlich draussen: lib/modules allein ist 112 MB und damit über
+# GitHubs Grenze von 100 MB pro Datei. Wie man sie neu beschafft, steht
+# in CLAUDE.md unter "Java-Laufzeit beschaffen".
+valorant-manager-electron/runtime/
+
+# ── Geheimnisse und persönliche Daten ──
+# Alte Codekopie von März 2026 — enthält einen Henrik-API-Key im Klartext
+Valorant Zwischenspeicher/
+# Account-Daten und Schlüssel liegen ausserhalb des Projekts
+# (~/.valorant-manager/), können aber versehentlich hierher kopiert werden:
+accounts.json
+accounts-vor-import-*.json
+masterkey.bin
+session-token
+config.json
+*.vmexport
+
+# ── Editoren und Betriebssystem ──
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# ── Protokolle ──
+*.log
+npm-debug.log*

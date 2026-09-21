@@ -1,0 +1,52 @@
+{
+  "name": "valorant-manager",
+  "version": "2.0.0",
+  "description": "Valorant Account Manager — Electron + React + Java",
+  "author": "Nico",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently -k -n react,electron -c cyan,magenta \"cd frontend && npm start\" \"wait-on -t 120000 http://localhost:3100 && electron . --dev\"",
+    "build": "cd frontend && npm run build",
+    "package": "npm run build && electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^7.2.0"
+  },
+  "build": {
+    "appId": "com.valorant.manager",
+    "productName": "Valorant Manager",
+    "files": [
+      "main.js",
+      "preload.js",
+      "frontend/build/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "extraResources": [
+      {
+        "from": "backend",
+        "to": "backend"
+      },
+      {
+        "from": "runtime",
+        "to": "runtime",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ]
+  }
+}
