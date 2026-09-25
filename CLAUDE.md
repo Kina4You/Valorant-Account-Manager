@@ -167,6 +167,20 @@ Funktion.
 
 `UnlockScreen` erscheint vor allem anderen, wenn `security.locked` gilt.
 
+## Freunde & Auto-Sync
+
+Umschalter ACCOUNTS | FRIENDS oben in der Seitenleiste. Freunde sind
+`Account`-Objekte ohne Zugangsdaten (nur Riot-Name + Tag), liegen verschlüsselt
+in `~/.valorant-manager/friends.json` — gleicher Schlüssel wie `accounts.json`.
+Wechselt die Schutzstufe (Master-Passwort an/aus/ändern), muss `saveFriends`
+mitlaufen, sonst bleibt die Datei auf dem alten Schlüssel. Endpunkte:
+`/api/friends` (GET, POST), `/api/friends/{i}` (DELETE), `/api/friends/{i}/sync`.
+Freunde sind NICHT im Export enthalten.
+
+Die Schlüssel in `syncing` (`App.jsx`) lauten `"a"+index` bzw. `"f"+index`.
+Auto-Sync beim Start: localStorage `vm-autosync` = `"1"`; synchronisiert alle
+Accounts und Freunde nacheinander (parallel liefe ins Henrik-Limit).
+
 ## Sicherung / Umzug (Export & Import)
 
 Knopf `⤓` im Kopfbereich. Nötig, weil die normale `accounts.json` am
@@ -244,7 +258,9 @@ greift das System-Java), aber die gepackte Windows-App braucht sie.
 
 ## Versionskontrolle
 
-Ein Repo im Projektwurzelverzeichnis, Branch `main`, kein Remote.
+Ein Repo im Projektwurzelverzeichnis, Branch `main`, Remote `origin` =
+`git@github.com:Kina4You/Valorant-Account-Manager.git` (SSH funktioniert,
+`gh` ist nicht installiert).
 Das alte verschachtelte CRA-Repo unter `frontend/.git` wurde nach
 `~/Desktop/valorant-frontend-git-backup` verschoben — verschachtelte Repos
 brechen die Nachverfolgung im Hauptrepo.
@@ -271,7 +287,8 @@ das wäre schlechter als kein Update.
 
 ## Offene Punkte
 
-- **Maven fehlt im PATH** (kein `mvnw`). Behelf oben. Fix: `brew install maven`
+- **Maven fehlt im PATH** (kein `mvnw`). Behelf: IntelliJs Maven,
+  `"/Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/bin/mvn"`. Fix: `brew install maven`
   (Homebrew ist ebenfalls nicht installiert).
 - **Alter Henrik-API-Key** steht im Klartext in `Valorant Zwischenspeicher/`.
   Muss bei Henrik zurückgezogen werden — das kann nur der Nutzer selbst.

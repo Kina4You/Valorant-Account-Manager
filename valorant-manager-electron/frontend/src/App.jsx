@@ -229,7 +229,7 @@ function AccountModal({ account, index, onClose, onSave }) {
 }
 
 // ─── Delete Confirm Modal ────────────────────────────
-function DeleteModal({ name, onConfirm, onClose }) {
+function DeleteModal({ name, onConfirm, onClose, title = t("account.deleteTitle"), text = t("account.deleteText"), confirmLabel = t("common.delete") }) {
   return (
     <div style={{
       position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
@@ -243,15 +243,89 @@ function DeleteModal({ name, onConfirm, onClose }) {
         animation: "fadeUp 0.2s ease"
       }}>
         <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 22, letterSpacing: 2, color: "#fff", marginBottom: 8 }}>
-          {t("account.deleteTitle")}
+          {title}
         </div>
         <p style={{ fontSize: 13, color: "#9ca3af", marginBottom: 24, lineHeight: 1.6 }}>
-          <span style={{ color: "#ff4655" }}>{name}</span> wird unwiderruflich gelöscht.
+          <span style={{ color: "#ff4655" }}>{name}</span> {text}
         </p>
         <div style={{ display: "flex", gap: 10 }}>
           <button onClick={onClose} style={cancelBtnStyle}>{t("common.cancel")}</button>
           <button onClick={onConfirm} style={{ ...saveBtnStyle, background: "rgba(255,70,85,0.2)", borderColor: "rgba(255,70,85,0.5)" }}>
-            {t("common.delete")}
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Freund hinzufügen ───────────────────────────────
+// Ein einziges Feld "Name#TAG" — so, wie man die Riot-ID im Spiel sieht.
+function FriendModal({ onClose, onSave }) {
+  const [value, setValue] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    // Am LETZTEN # trennen — Namen dürfen selbst keins enthalten, aber so
+    // bleibt ein versehentliches "##TAG" wenigstens erkennbar falsch.
+    const pos = value.lastIndexOf("#");
+    const riotName = value.slice(0, pos).trim();
+    const riotTag = value.slice(pos + 1).trim();
+    if (pos < 0 || !riotName || !riotTag) { setError(t("friend.needHash")); return; }
+
+    setLoading(true); setError("");
+    try {
+      const res = await onSave(riotName, riotTag);
+      if (res?.success) onClose();
+      else setError(tb(res?.message, t("err.generic")));
+    } catch (e) {
+      setError(e.message || t("err.generic"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)",
+      backdropFilter: "blur(8px)", display: "flex",
+      alignItems: "center", justifyContent: "center", zIndex: 1000
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width: "min(420px, calc(100vw - 32px))", maxHeight: "88vh", overflowY: "auto", background: "#0d0d14",
+        border: "1px solid rgba(255,70,85,0.35)",
+        borderRadius: 12, padding: "28px 32px",
+        boxShadow: "0 0 80px rgba(255,70,85,0.1)",
+        animation: "fadeUp 0.2s ease"
+      }}>
+        <div style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 24, letterSpacing: 3, color: "#fff", marginBottom: 6 }}>
+          {t("friend.addTitle")}
+        </div>
+        <div style={{ fontSize: 12, color: "#9ca3af", lineHeight: 1.55, marginBottom: 16 }}>
+          {t("friend.addText")}
+        </div>
+
+        <label style={{
+          fontSize: 9, color: "#4b5563", letterSpacing: 2,
+          fontFamily: "'Space Mono', monospace", display: "block", marginBottom: 4
+        }}>{t("friend.label")}</label>
+        <input
+          autoFocus
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") handleSubmit(); }}
+          placeholder={t("friend.ph")}
+          style={inputStyle}
+        />
+        {error && (
+          <div style={{ fontSize: 11, color: "#ff4655", marginTop: 8 }}>{error}</div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button onClick={onClose} style={cancelBtnStyle}>{t("common.cancel")}</button>
+          <button onClick={handleSubmit} disabled={loading} style={saveBtnStyle}>
+            {loading ? t("common.saving") : t("common.save")}
           </button>
         </div>
       </div>
@@ -1062,6 +1136,64 @@ function ZoomSection({ showToast }) {
   );
 }
 
+// ─── Auto-Sync beim Start ────────────────────────────
+// Reine Oberflächen-Einstellung, deshalb wie Zoom und Sprache im localStorage.
+const AUTOSYNC_KEY = "vm-autosync";
+
+function leseAutoSync() {
+  try { return localStorage.getItem(AUTOSYNC_KEY) === "1"; } catch { return false; }
+}
+
+function AutoSyncSection() {
+  const [an, setAn] = useState(leseAutoSync);
+
+  const setze = (wert) => {
+    setAn(wert);
+    try { localStorage.setItem(AUTOSYNC_KEY, wert ? "1" : "0"); } catch { }
+  };
+
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
+        <span style={{ fontSize: 9, letterSpacing: 2, color: "#6b7280", fontFamily: "'Space Mono', monospace" }}>
+          {t("auto.label")}
+        </span>
+        <InfoHint title={t("auto.hintTitle")} width={320}>
+          {t("auto.hint1")}
+          <br /><br />
+          {t("auto.hint2")}
+          <br /><br />
+          <span style={{ color: "#f59e0b" }}>{t("auto.hint3")}</span>
+        </InfoHint>
+      </div>
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+        padding: "10px 12px", borderRadius: 8,
+        background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)",
+      }}>
+        <div style={{ fontSize: 11, color: an ? "#22c55e" : "#9ca3af", lineHeight: 1.5 }}>
+          {an ? t("auto.textOn") : t("auto.textOff")}
+        </div>
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {[true, false].map(wert => {
+            const aktiv = an === wert;
+            return (
+              <button key={String(wert)} onClick={() => setze(wert)} style={{
+                ...smallBtnStyle,
+                color: aktiv ? "#ff4655" : "#d1d5db",
+                borderColor: aktiv ? "rgba(255,70,85,0.5)" : "rgba(255,255,255,0.14)",
+                background: aktiv ? "rgba(255,70,85,0.12)" : "rgba(255,255,255,0.05)",
+              }}>
+                {wert ? t("auto.on") : t("auto.off")}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Aktualisierung ──────────────────────────────────
 // Holt neue Fassungen direkt aus den GitHub-Releases. Der Nutzer entscheidet
 // in jedem Schritt: suchen, herunterladen, neu starten.
@@ -1213,6 +1345,11 @@ function BasicSettings({ status, onChanged, showToast, onOpenBackup, onOpenApiKe
           <ZoomSection showToast={showToast} />
         </div>
 
+        {/* Auto-Sync beim Start */}
+        <div style={{ marginBottom: 22 }}>
+          <AutoSyncSection />
+        </div>
+
         {/* Sicherung */}
         <div style={{ marginBottom: 22 }}>
           <div style={{ display: "flex", alignItems: "center", marginBottom: 6 }}>
@@ -1343,6 +1480,10 @@ export default function App() {
   const [syncing, setSyncing] = useState({});
   const [toast, setToast] = useState(null);
   const [search, setSearch] = useState("");
+  // Linke Liste: eigene Accounts oder Freunde (nur anschauen)
+  const [view, setView] = useState("accounts"); // accounts | friends
+  const [friends, setFriends] = useState([]);
+  const [selectedFriend, setSelectedFriend] = useState(null);
 
   // API-Key-Status: null = wird noch geprüft, false = fehlt (Setup), true = vorhanden
   const [apiKeyReady, setApiKeyReady] = useState(null);
@@ -1356,21 +1497,45 @@ export default function App() {
   const showToast = (message, type = "success") => setToast({ message, type });
 
   // Accounts laden
+  // Auswahl nach dem Neuladen auf den frischen Datensatz umhängen. Funktional
+  // (prev => ...), weil loadAccounts auch aus laufenden Sync-Schleifen kommt,
+  // deren Stand von "selected" längst veraltet ist.
+  const nachladen = (indexed) => (prev) => prev
+    ? indexed.find(a => a.riotName === prev.riotName && a.riotTag === prev.riotTag) ?? prev
+    : indexed[0] ?? null;
+
   const loadAccounts = useCallback(async () => {
     try {
       const data = await api.getAccounts();
       // Index hinzufügen (Backend gibt -1 zurück, wir setzen ihn hier)
       const indexed = data.map((acc, i) => ({ ...acc, index: i }));
       setAccounts(indexed);
-      if (!selected && indexed.length > 0) setSelected(indexed[0]);
-      else if (selected) {
-        const updated = indexed.find(a => a.riotName === selected.riotName && a.riotTag === selected.riotTag);
-        if (updated) setSelected(updated);
-      }
+      setSelected(nachladen(indexed));
+      return indexed;
     } catch (err) {
       showToast(t("toast.backendDown"), "error");
+      return [];
     }
-  }, [selected]);
+  }, []);
+
+  const loadFriends = useCallback(async () => {
+    try {
+      const data = await api.getFriends();
+      const indexed = data.map((f, i) => ({ ...f, index: i }));
+      setFriends(indexed);
+      setSelectedFriend(nachladen(indexed));
+      return indexed;
+    } catch {
+      return [];
+    }
+  }, []);
+
+  // Alles laden und — falls eingestellt — gleich synchronisieren
+  const ladeAlles = async () => {
+    const accs = await loadAccounts();
+    const frs = await loadFriends();
+    if (leseAutoSync()) syncAll(accs, frs);
+  };
 
   // Schutzstatus neu einlesen (nach Ein-/Ausschalten des Master-Passworts)
   const refreshSecurity = useCallback(async () => {
@@ -1402,7 +1567,7 @@ export default function App() {
       try {
         const status = await api.getApiKeyStatus();
         setApiKeyReady(!!status?.configured);
-        if (status?.configured) loadAccounts();
+        if (status?.configured) ladeAlles();
       } catch {
         // Backend nicht erreichbar — Setup-Dialog würde eh nicht funktionieren,
         // aber wir zeigen ihn, damit der User nicht vor leerer App sitzt
@@ -1417,35 +1582,71 @@ export default function App() {
     try {
       const status = await api.getApiKeyStatus();
       setApiKeyReady(!!status?.configured);
-      if (status?.configured) await loadAccounts();
+      if (status?.configured) await ladeAlles();
     } catch {
       setApiKeyReady(false);
     }
   };
 
-  // Account synchronisieren
-  const handleSync = async (index) => {
-    setSyncing(s => ({ ...s, [index]: true }));
+  // Account oder Freund synchronisieren. kind: "a" = Account, "f" = Freund.
+  // Der Schlüssel in "syncing" ist kind + index, sonst drehte sich beim Sync
+  // von Freund 0 auch das Symbol an Account 0.
+  const handleSync = async (index, kind = "a", quiet = false) => {
+    const key = kind + index;
+    setSyncing(s => ({ ...s, [key]: true }));
     try {
-      const res = await api.syncAccount(index);
+      const res = kind === "f" ? await api.syncFriend(index) : await api.syncAccount(index);
       if (res.success) {
-        showToast(t("toast.syncOk"));
-        await loadAccounts();
-      } else {
-        showToast(tb(res.message, t("toast.syncFailed")), "error");
+        if (!quiet) showToast(t("toast.syncOk"));
+        await (kind === "f" ? loadFriends() : loadAccounts());
+        return true;
       }
+      if (!quiet) showToast(tb(res.message, t("toast.syncFailed")), "error");
     } catch {
-      showToast(t("toast.syncFailed"), "error");
+      if (!quiet) showToast(t("toast.syncFailed"), "error");
     } finally {
-      setSyncing(s => ({ ...s, [index]: false }));
+      setSyncing(s => ({ ...s, [key]: false }));
     }
+    return false;
   };
 
-  // Alle synchronisieren
-  const handleSyncAll = async () => {
-    for (const acc of accounts) {
-      await handleSync(acc.index);
+  // Alle nacheinander — parallel würde sofort ins Henrik-Limit laufen.
+  // Am Ende EINE Meldung statt einer pro Account.
+  const syncAll = async (accs, frs) => {
+    const jobs = [...accs.map(a => [a.index, "a"]), ...frs.map(f => [f.index, "f"])];
+    if (!jobs.length) return;
+    let ok = 0;
+    for (const [index, kind] of jobs) {
+      if (await handleSync(index, kind, true)) ok++;
     }
+    showToast(t("toast.syncAllDone", { ok, n: jobs.length }), ok === jobs.length ? "success" : "error");
+  };
+
+  const handleSyncAll = () => syncAll(accounts, friends);
+
+  // Freund hinzufügen und gleich laden, damit nicht erst eine leere Seite erscheint
+  const handleAddFriend = async (riotName, riotTag) => {
+    const res = await api.addFriend(riotName, riotTag);
+    if (res?.success) {
+      showToast(t("toast.friendAdded"));
+      const list = await loadFriends();
+      const neu = list.find(f =>
+        f.riotName.toLowerCase() === riotName.toLowerCase() &&
+        f.riotTag.toLowerCase() === riotTag.replace(/^#/, "").toLowerCase());
+      if (neu) {
+        setSelectedFriend(neu);
+        handleSync(neu.index, "f");
+      }
+    }
+    return res;
+  };
+
+  const handleRemoveFriend = async () => {
+    await api.deleteFriend(selectedFriend.index);
+    setSelectedFriend(null);
+    setModal(null);
+    showToast(t("toast.friendRemoved"), "info");
+    await loadFriends();
   };
 
   // Account erstellen
@@ -1489,11 +1690,18 @@ export default function App() {
     }
   };
 
-  const filtered = accounts.filter(a =>
-    `${a.riotName}${a.riotTag}${a.loginName}`.toLowerCase().includes(search.toLowerCase())
+  const isFriends = view === "friends";
+  const list = isFriends ? friends : accounts;
+  const current = isFriends ? selectedFriend : selected;
+  const kind = isFriends ? "f" : "a";
+  // Freunde haben nur Übersicht — ein offener Zugangsdaten-Reiter gilt dort nicht
+  const activeTab = isFriends ? "overview" : tab;
+
+  const filtered = list.filter(a =>
+    `${a.riotName}${a.riotTag}${a.loginName ?? ""}`.toLowerCase().includes(search.toLowerCase())
   );
 
-  const data = selected?.cachedData;
+  const data = current?.cachedData;
   const rc = rankColor(data?.rankName);
 
   // Solange der Key-Status geprüft wird: kurzer Ladezustand
@@ -1525,6 +1733,7 @@ export default function App() {
             setApiKeyReady(true);
             await refreshSecurity();
             loadAccounts();
+            loadFriends();
             showToast(t("toast.keySaved"));
             // Schritt 2 der Ersteinrichtung: Grundeinstellungen
             setSetupStep2(true);
@@ -1537,7 +1746,10 @@ export default function App() {
   return (
     <div style={{
       fontFamily: "'Rajdhani', 'sans-serif'",
-      background: "#0a0a0f", minHeight: "100vh",
+      // Feste Höhe statt minHeight: sonst wächst die ganze Seite mit der
+      // Liste, und alles unterhalb (früher der Hinzufügen-Knopf) rutscht
+      // aus dem Bild, statt dass nur die Liste scrollt.
+      background: "#0a0a0f", height: "100vh", overflow: "hidden",
       color: "#e8e8e8", display: "flex", flexDirection: "column",
       userSelect: "none",
     }}>
@@ -1681,7 +1893,7 @@ export default function App() {
       </header>
 
       {/* ── MAIN LAYOUT ── */}
-      <div style={{ display: "flex", flex: 1, position: "relative", zIndex: 1, overflow: "hidden" }}>
+      <div style={{ display: "flex", flex: 1, minHeight: 0, position: "relative", zIndex: 1, overflow: "hidden" }}>
 
         {/* ── SIDEBAR ── */}
         <aside style={{
@@ -1689,21 +1901,62 @@ export default function App() {
           display: "flex", flexDirection: "column",
           background: "rgba(8,8,13,0.8)", flexShrink: 0,
         }}>
-          <div style={{ padding: "12px 12px 6px" }}>
-            <span style={{ fontSize: 9, letterSpacing: 3, color: "#374151", fontFamily: "'Space Mono', monospace" }}>
-              {t("nav.accounts")}
-            </span>
+          {/* Umschalter Accounts / Freunde */}
+          <div style={{ display: "flex", gap: 4, padding: "10px 10px 0" }}>
+            {["accounts", "friends"].map(ansicht => {
+              const aktiv = view === ansicht;
+              return (
+                <button key={ansicht} onClick={() => setView(ansicht)} style={{
+                  flex: 1, padding: "7px 0", borderRadius: 5,
+                  fontSize: 10, fontWeight: 700, letterSpacing: 2,
+                  fontFamily: "'Space Mono', monospace",
+                  background: aktiv ? "rgba(255,70,85,0.12)" : "transparent",
+                  border: `1px solid ${aktiv ? "rgba(255,70,85,0.45)" : "rgba(255,255,255,0.08)"}`,
+                  color: aktiv ? "#ff4655" : "#6b7280",
+                  transition: "all 0.15s ease",
+                }}>
+                  {ansicht === "accounts" ? t("nav.accounts") : t("nav.friends")}
+                  <span style={{ opacity: 0.6, marginLeft: 5 }}>
+                    {ansicht === "accounts" ? accounts.length : friends.length}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Hinzufügen — bewusst oben und kräftig, damit er immer im Bild ist */}
+          <div style={{ padding: "8px 10px 10px" }}>
+            <button
+              onClick={() => setModal(isFriends ? "addFriend" : "add")}
+              style={{
+                width: "100%", padding: "10px",
+                background: "#ff4655", border: "1px solid #ff4655",
+                borderRadius: 6, color: "#fff", fontSize: 12, fontWeight: 700,
+                letterSpacing: 1.5, transition: "all 0.18s ease",
+                boxShadow: "0 0 16px rgba(255,70,85,0.25)",
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = "#ff5c69";
+                e.currentTarget.style.boxShadow = "0 0 22px rgba(255,70,85,0.45)";
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = "#ff4655";
+                e.currentTarget.style.boxShadow = "0 0 16px rgba(255,70,85,0.25)";
+              }}
+            >
+              {isFriends ? t("nav.addFriend") : t("nav.addAccountLong")}
+            </button>
           </div>
 
           <div style={{ flex: 1, overflowY: "auto", padding: "0 8px" }}>
             {filtered.map((acc) => {
-              const isActive = selected?.index === acc.index;
+              const isActive = current?.index === acc.index;
               const d = acc.cachedData;
               return (
                 <div
-                  key={acc.index}
+                  key={kind + acc.index}
                   className="card-hover"
-                  onClick={() => { setSelected(acc); setTab("overview"); }}
+                  onClick={() => { (isFriends ? setSelectedFriend : setSelected)(acc); setTab("overview"); }}
                   style={{
                     borderRadius: 6, padding: "10px 12px", marginBottom: 3,
                     background: isActive ? "rgba(255,70,85,0.1)" : "transparent",
@@ -1757,7 +2010,7 @@ export default function App() {
                     </div>
 
                     {/* Sync indicator */}
-                    {syncing[acc.index] && (
+                    {syncing[kind + acc.index] && (
                       <div style={{ fontSize: 14, animation: "spin 1s linear infinite" }}>↻</div>
                     )}
                   </div>
@@ -1767,41 +2020,17 @@ export default function App() {
 
             {filtered.length === 0 && (
               <div style={{ padding: "20px 12px", color: "#374151", fontSize: 12, fontFamily: "'Space Mono', monospace", textAlign: "center" }}>
-                {search ? t("nav.noResults") : t("nav.noAccounts")}
+                {search ? t("nav.noResults") : isFriends ? t("nav.noFriends") : t("nav.noAccounts")}
               </div>
             )}
           </div>
 
-          {/* Add Button */}
-          <div style={{ padding: 10 }}>
-            <button
-              onClick={() => setModal("add")}
-              style={{
-                width: "100%", padding: "9px",
-                background: "transparent", border: "1px dashed rgba(255,255,255,0.1)",
-                borderRadius: 6, color: "#4b5563", fontSize: 12, fontWeight: 600,
-                letterSpacing: 1, transition: "all 0.18s ease",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = "#ff4655";
-                e.currentTarget.style.color = "#ff4655";
-                e.currentTarget.style.background = "rgba(255,70,85,0.05)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)";
-                e.currentTarget.style.color = "#4b5563";
-                e.currentTarget.style.background = "transparent";
-              }}
-            >
-              {t("nav.addAccountLong")}
-            </button>
-          </div>
         </aside>
 
         {/* ── DETAIL PANEL ── */}
         <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          {selected ? (
-            <div key={selected.index} style={{ display: "flex", flexDirection: "column", height: "100%", animation: "fadeUp 0.2s ease" }}>
+          {current ? (
+            <div key={kind + current.index} style={{ display: "flex", flexDirection: "column", height: "100%", animation: "fadeUp 0.2s ease" }}>
 
               {/* Hero */}
               <div style={{
@@ -1819,9 +2048,9 @@ export default function App() {
                   {/* Avatar */}
                   <div style={{
                     width: 60, height: 60, borderRadius: 10, flexShrink: 0,
-                    border: `2px solid ${selected.isMain ? "#ff4655" : "rgba(255,255,255,0.1)"}`,
+                    border: `2px solid ${current.isMain ? "#ff4655" : "rgba(255,255,255,0.1)"}`,
                     overflow: "hidden",
-                    boxShadow: selected.isMain ? "0 0 20px rgba(255,70,85,0.25)" : "none",
+                    boxShadow: current.isMain ? "0 0 20px rgba(255,70,85,0.25)" : "none",
                   }}>
                     {data?.cardImageUrl ? (
                       <img src={data.cardImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -1830,18 +2059,18 @@ export default function App() {
                         width: "100%", height: "100%",
                         background: "linear-gradient(135deg, #1a1a2e, #0f0f1a)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 24, fontWeight: 700, color: selected.isMain ? "#ff4655" : "#9ca3af"
-                      }}>{selected.riotName[0]}</div>
+                        fontSize: 24, fontWeight: 700, color: current.isMain ? "#ff4655" : "#9ca3af"
+                      }}>{current.riotName[0]}</div>
                     )}
                   </div>
 
                   <div style={{ flex: 1 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 5 }}>
                       <h1 style={{ fontFamily: "'Bebas Neue', sans-serif", fontSize: 30, letterSpacing: 2, color: "#fff", lineHeight: 1 }}>
-                        {selected.riotName}
+                        {current.riotName}
                       </h1>
-                      <span style={{ fontSize: 15, color: "#374151" }}>#{selected.riotTag}</span>
-                      {selected.isMain && (
+                      <span style={{ fontSize: 15, color: "#374151" }}>#{current.riotTag}</span>
+                      {current.isMain && (
                         <span style={{
                           fontSize: 8, padding: "2px 7px",
                           background: "rgba(255,70,85,0.15)", border: "1px solid rgba(255,70,85,0.5)",
@@ -1876,14 +2105,18 @@ export default function App() {
 
                   {/* Actions */}
                   <div style={{ display: "flex", gap: 7, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    {[
+                    {(isFriends ? [
+                      // Freunde: nur anschauen — kein Login, kein Bearbeiten, kein Main
+                      { label: syncing[kind + current.index] ? t("nav.syncing") : t("nav.sync"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(current.index, "f") },
+                      { label: t("nav.remove"), color: "#ef4444", bg: "rgba(239,68,68,0.07)", border: "rgba(239,68,68,0.25)", action: () => setModal("removeFriend") },
+                    ] : [
                       { label: t("account.login"), color: "#ff4655", bg: "rgba(255,70,85,0.15)", border: "rgba(255,70,85,0.4)", action: handleLogin },
-                      { label: syncing[selected.index] ? t("nav.syncing") : t("nav.sync"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(selected.index) },
+                      { label: syncing[kind + current.index] ? t("nav.syncing") : t("nav.sync"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => handleSync(current.index) },
                       { label: t("nav.edit"), color: "#9ca3af", bg: "rgba(255,255,255,0.05)", border: "rgba(255,255,255,0.1)", action: () => setModal("edit") },
-                      !selected.isMain && { label: t("nav.setMain"), color: "#ffd700", bg: "rgba(255,215,0,0.07)", border: "rgba(255,215,0,0.25)", action: () => handleSetMain(selected.index) },
+                      !current.isMain && { label: t("nav.setMain"), color: "#ffd700", bg: "rgba(255,215,0,0.07)", border: "rgba(255,215,0,0.25)", action: () => handleSetMain(current.index) },
                       { label: "✕", color: "#ef4444", bg: "rgba(239,68,68,0.07)", border: "rgba(239,68,68,0.25)", action: () => setModal("delete") },
-                    ].filter(Boolean).map(btn => (
-                      <button key={btn.label} onClick={btn.action} disabled={syncing[selected.index] && btn.label === t("nav.syncing")} style={{
+                    ]).filter(Boolean).map(btn => (
+                      <button key={btn.label} onClick={btn.action} disabled={syncing[kind + current.index] && btn.label === t("nav.syncing")} style={{
                         padding: "7px 14px", background: btn.bg,
                         border: `1px solid ${btn.border}`, borderRadius: 4,
                         color: btn.color, fontSize: 11, fontWeight: 700, letterSpacing: 1.2,
@@ -1897,8 +2130,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div style={{
+              {/* Tabs — Freunde haben nur die Übersicht */}
+              {!isFriends && <div style={{
                 display: "flex", borderBottom: "1px solid rgba(255,255,255,0.06)",
                 padding: "0 28px", background: "rgba(8,8,13,0.5)"
               }}>
@@ -1918,20 +2151,20 @@ export default function App() {
                     }}
                   >{reiter === "overview" ? t("nav.overview") : t("nav.credentials")}</button>
                 ))}
-              </div>
+              </div>}
 
               {/* Tab Content */}
               <div style={{ flex: 1, overflowY: "auto", padding: "20px 28px" }}>
-                {tab === "overview" && (
+                {activeTab === "overview" && (
                   <OverviewTab
-                    account={selected}
+                    account={current}
                     data={data}
-                    onSync={() => handleSync(selected.index)}
-                    syncing={syncing[selected.index]}
+                    onSync={() => handleSync(current.index, kind)}
+                    syncing={syncing[kind + current.index]}
                   />
                 )}
-                {tab === "credentials" && (
-                  <CredentialsTab index={selected.index} riotName={selected.riotName} riotTag={selected.riotTag} />
+                {activeTab === "credentials" && (
+                  <CredentialsTab index={current.index} riotName={current.riotName} riotTag={current.riotTag} />
                 )}
               </div>
             </div>
@@ -1942,17 +2175,17 @@ export default function App() {
             }}>
               <div style={{ fontSize: 40 }}>⬅</div>
               <div style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: 2 }}>
-                {t("nav.selectAccount")}
+                {isFriends ? t("nav.selectFriend") : t("nav.selectAccount")}
               </div>
               {/* flex:"0 0 auto" hebt das flex:1 aus saveBtnStyle auf. In den
                   Dialogen steht der Knopf in einer Zeile (dort teilt flex:1 die
                   Breite auf) — hier in einer Spalte, wo es ihn ueber die ganze
                   Fensterhoehe strecken wuerde. */}
               <button
-                onClick={() => setModal("add")}
+                onClick={() => setModal(isFriends ? "addFriend" : "add")}
                 style={{ ...saveBtnStyle, flex: "0 0 auto", padding: "11px 22px" }}
               >
-                {t("nav.firstAccount")}
+                {isFriends ? t("nav.firstFriend") : t("nav.firstAccount")}
               </button>
             </div>
           )}
@@ -1967,6 +2200,19 @@ export default function App() {
         <AccountModal
           account={selected} index={selected.index}
           onClose={() => setModal(null)} onSave={handleEdit}
+        />
+      )}
+      {modal === "addFriend" && (
+        <FriendModal onClose={() => setModal(null)} onSave={handleAddFriend} />
+      )}
+      {modal === "removeFriend" && selectedFriend && (
+        <DeleteModal
+          name={`${selectedFriend.riotName}#${selectedFriend.riotTag}`}
+          title={t("friend.removeTitle")}
+          text={t("friend.removeText")}
+          confirmLabel={t("nav.remove")}
+          onConfirm={handleRemoveFriend}
+          onClose={() => setModal(null)}
         />
       )}
       {modal === "delete" && selected && (

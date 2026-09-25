@@ -20,6 +20,8 @@ public class ApiServer {
 
     private final StorageManager storage = new StorageManager();
     private List<Account> accounts;
+    // Freunde: nur Riot-Name + Tag, keine Zugangsdaten. Zum Mitverfolgen von Rang und RR.
+    private List<Account> friends;
     private final ExecutorService apiExecutor = Executors.newSingleThreadExecutor();
 
     public static void main(String[] args) {
@@ -33,7 +35,9 @@ public class ApiServer {
     @jakarta.annotation.PostConstruct
     public void init() {
         accounts = storage.loadAccounts();
-        System.out.println("[Server] " + accounts.size() + " Accounts geladen.");
+        friends = storage.loadFriends();
+        System.out.println("[Server] " + accounts.size() + " Accounts, "
+            + friends.size() + " Freunde geladen.");
         if (!Config.hasApiKey()) {
             System.out.println("[Server] WARNUNG: Kein API-Key gesetzt. "
                 + "Bitte im Frontend einen Henrik-API-Key hinterlegen.");
@@ -82,6 +86,7 @@ public class ApiServer {
             return ResponseEntity.ok(new SimpleResult(false, "pw_wrong"));
         }
         accounts = storage.loadAccounts();
+        friends = storage.loadFriends();
         System.out.println("[Server] Entsperrt, " + accounts.size() + " Accounts geladen.");
         return ResponseEntity.ok(new SimpleResult(true, "unlock_ok"));
     }
@@ -97,6 +102,7 @@ public class ApiServer {
         if (!storage.enablePassword(req.password(), accounts)) {
             return ResponseEntity.ok(new SimpleResult(false, "pw_locked"));
         }
+        storage.saveFriends(friends); // gleicher Schlüssel wie die Accounts
         return ResponseEntity.ok(new SimpleResult(true, "pw_enabled"));
     }
 
@@ -112,6 +118,7 @@ public class ApiServer {
         if (!storage.disablePassword(accounts)) {
             return ResponseEntity.ok(new SimpleResult(false, "pw_locked"));
         }
+        storage.saveFriends(friends);
         return ResponseEntity.ok(new SimpleResult(true, "pw_disabled"));
     }
 
@@ -127,6 +134,7 @@ public class ApiServer {
             return ResponseEntity.ok(new SimpleResult(false, "old_pw_wrong"));
         }
         storage.enablePassword(req.newPassword(), accounts);
+        storage.saveFriends(friends);
         return ResponseEntity.ok(new SimpleResult(true, "pw_changed"));
     }
 
@@ -230,7 +238,13 @@ public class ApiServer {
     @GetMapping("/accounts/{index}/sync")
     public ResponseEntity<SyncResponse> syncAccount(@PathVariable int index) {
         if (index < 0 || index >= accounts.size()) return ResponseEntity.notFound().build();
-        Account acc = accounts.get(index);
+        SyncResponse res = syncOne(accounts.get(index));
+        if (res.success()) storage.saveAccounts(accounts);
+        return ResponseEntity.ok(res);
+    }
+
+    /** Holt frische Daten von Henrik und schreibt sie in das Objekt. Speichert NICHT. */
+    private SyncResponse syncOne(Account acc) {
         try {
             Future<ValorantAPI.FullAccountInfo> future = apiExecutor.submit(() ->
                 ValorantAPI.getFullData(acc.getRiotName(), acc.getRiotTag())
@@ -252,16 +266,56 @@ public class ApiServer {
                     int newMatches = acc.addNewMatches(snapshots);
                     System.out.println("[Sync] " + newMatches + " neue Matches für " + acc.getRiotName());
                 }
-
-                storage.saveAccounts(accounts);
-                return ResponseEntity.ok(new SyncResponse(true, "sync_ok", info));
+                return new SyncResponse(true, "sync_ok", info);
             }
         } catch (TimeoutException e) {
-            return ResponseEntity.ok(new SyncResponse(false, "sync_timeout", null));
+            return new SyncResponse(false, "sync_timeout", null);
         } catch (Exception e) {
             System.out.println("[Sync] Fehler: " + e.getMessage());
         }
-        return ResponseEntity.ok(new SyncResponse(false, "sync_failed", null));
+        return new SyncResponse(false, "sync_failed", null);
+    }
+
+    // ── Freunde ───────────────────────────────────────────────────────────
+    // Nur zum Anschauen: Name#Tag reicht, die Henrik-API ist öffentlich.
+
+    @GetMapping("/friends")
+    public ResponseEntity<List<AccountDTO>> getFriends() {
+        List<AccountDTO> dtos = new java.util.ArrayList<>();
+        for (int i = 0; i < friends.size(); i++) dtos.add(AccountDTO.from(friends.get(i), i));
+        return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/friends")
+    public ResponseEntity<SimpleResult> addFriend(@RequestBody FriendRequest req) {
+        String name = req.riotName() == null ? "" : req.riotName().trim();
+        String tag = req.riotTag() == null ? "" : req.riotTag().trim().replaceFirst("^#", "");
+        if (name.isEmpty() || tag.isEmpty()) {
+            return ResponseEntity.ok(new SimpleResult(false, "friend_invalid"));
+        }
+        boolean exists = friends.stream().anyMatch(f ->
+            f.getRiotName().equalsIgnoreCase(name) && f.getRiotTag().equalsIgnoreCase(tag));
+        if (exists) return ResponseEntity.ok(new SimpleResult(false, "friend_exists"));
+
+        friends.add(new Account(name, tag, null, null, null, null, null));
+        storage.saveFriends(friends);
+        return ResponseEntity.ok(new SimpleResult(true, "friend_added"));
+    }
+
+    @DeleteMapping("/friends/{index}")
+    public ResponseEntity<Void> deleteFriend(@PathVariable int index) {
+        if (index < 0 || index >= friends.size()) return ResponseEntity.notFound().build();
+        friends.remove(index);
+        storage.saveFriends(friends);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/friends/{index}/sync")
+    public ResponseEntity<SyncResponse> syncFriend(@PathVariable int index) {
+        if (index < 0 || index >= friends.size()) return ResponseEntity.notFound().build();
+        SyncResponse res = syncOne(friends.get(index));
+        if (res.success()) storage.saveFriends(friends);
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/accounts/{index}/main")
@@ -302,6 +356,7 @@ public class ApiServer {
 
     public record AccountCreateRequest(String riotName, String riotTag, String loginName,
                                         String password, String email, String emailPassword, String notes) {}
+    public record FriendRequest(String riotName, String riotTag) {}
     public record SyncResponse(boolean success, String message, ValorantAPI.FullAccountInfo data) {}
     public record CredentialsDTO(String loginName, String password,
                                   String email, String emailPassword, String notes) {}

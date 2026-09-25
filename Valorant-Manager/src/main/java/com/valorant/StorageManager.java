@@ -183,6 +183,45 @@ public class StorageManager {
         }
     }
 
+    // ── Freunde ───────────────────────────────────────────────────────────
+    // Eigene Datei, gleiche Verschlüsselung wie accounts.json. Freunde sind
+    // Account-Objekte ohne Zugangsdaten — so gelten Sync und Match-Verlauf
+    // unverändert auch für sie.
+
+    private static final Path FRIENDS_FILE = DATA_DIR.resolve("friends.json");
+
+    /** Eigene Schutzsperre, gleiche Idee wie loadFailed bei den Accounts. */
+    private boolean friendsLoadFailed = false;
+
+    public void saveFriends(List<Account> friends) {
+        if (lockedByPassword || loadFailed || friendsLoadFailed) {
+            System.out.println("[Storage] Freunde nicht gespeichert: Daten gesperrt.");
+            return;
+        }
+        try {
+            String encrypted = CryptoManager.encrypt(gson.toJson(friends));
+            Files.writeString(FRIENDS_FILE, encrypted, StandardCharsets.UTF_8);
+            restrictPermissions(FRIENDS_FILE);
+        } catch (Exception e) {
+            System.out.println("[Storage] Fehler beim Speichern der Freunde: " + e.getMessage());
+        }
+    }
+
+    public List<Account> loadFriends() {
+        try {
+            if (!Files.exists(FRIENDS_FILE)) return new ArrayList<>();
+            String content = Files.readString(FRIENDS_FILE, StandardCharsets.UTF_8).trim();
+            if (content.isEmpty()) return new ArrayList<>();
+            List<Account> friends = fromJson(CryptoManager.decrypt(content));
+            friendsLoadFailed = false;
+            return friends;
+        } catch (Exception e) {
+            friendsLoadFailed = true;
+            System.out.println("[Storage] Freunde nicht lesbar — Speichern gesperrt: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
     public List<Account> loadAccounts() {
         try {
             // Quelle bestimmen: neuer Ort bevorzugt, sonst alte Orte (einmalige Übernahme)

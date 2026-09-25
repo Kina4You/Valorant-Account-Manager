@@ -63,6 +63,17 @@ export const setMainAccount = (index) =>
 export const getCredentials = (index) =>
   req(`/accounts/${index}/credentials`, { method: "POST" });
 
+// ─── Freunde (nur anschauen, keine Zugangsdaten) ────
+export const getFriends = () => req("/friends");
+
+export const addFriend = (riotName, riotTag) =>
+  req("/friends", { method: "POST", body: JSON.stringify({ riotName, riotTag }) });
+
+export const deleteFriend = (index) =>
+  req(`/friends/${index}`, { method: "DELETE" });
+
+export const syncFriend = (index) => req(`/friends/${index}/sync`);
+
 // ─── Sicherung: Export / Import ─────────────────────
 // Der Export ist mit einem selbst gewählten Passwort geschützt und dadurch
 // auf einem anderen Rechner lesbar — anders als die normale Ablage, die am
