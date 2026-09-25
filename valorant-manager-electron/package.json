@@ -1,6 +1,6 @@
 {
   "name": "valorant-manager",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Valorant Account Manager — Electron + React + Java",
   "author": "Nico",
   "main": "main.js",

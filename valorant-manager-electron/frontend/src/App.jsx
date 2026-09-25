@@ -627,11 +627,13 @@ function OverviewTab({ account, data, onSync, syncing }) {
               {data.lastGames.map((g, i) => (
                 <div key={i} style={{
                   flex: 1, height: 34, borderRadius: 4,
-                  background: g === "W" ? "rgba(255,70,85,0.2)" : g === "L" ? "rgba(55,65,81,0.5)" : "rgba(107,114,128,0.3)",
-                  border: `1px solid ${g === "W" ? "rgba(255,70,85,0.45)" : "rgba(55,65,81,0.8)"}`,
+                  // Grün = Sieg, Rot = Niederlage, Grau = Unentschieden —
+                  // gleiche Farben wie die Punkte im RR-Graph
+                  background: g === "W" ? "rgba(34,197,94,0.15)" : g === "L" ? "rgba(239,68,68,0.15)" : "rgba(107,114,128,0.2)",
+                  border: `1px solid ${g === "W" ? "rgba(34,197,94,0.45)" : g === "L" ? "rgba(239,68,68,0.45)" : "rgba(107,114,128,0.4)"}`,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   fontSize: 10, fontWeight: 700,
-                  color: g === "W" ? "#ff4655" : "#6b7280",
+                  color: g === "W" ? "#22c55e" : g === "L" ? "#ef4444" : "#9ca3af",
                   fontFamily: "'Space Mono', monospace"
                 }}>{g}</div>
               ))}
